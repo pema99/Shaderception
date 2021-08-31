@@ -28,7 +28,7 @@
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = 2.0 * (v.uv - 0.5) * 10.0;
+                o.uv = v.uv;
                 return o;
             }
 
@@ -45,8 +45,10 @@
             {
                 switch (opi)
                 {
-                    case 'x': return varyings.uv.x;
-                    case 'y': return varyings.uv.y;
+                    case 'x': return 2.0 * (varyings.uv.x - 0.5) * 10.0;
+                    case 'y': return 2.0 * (varyings.uv.y - 0.5) * 10.0;
+                    case 'u': return varyings.uv.x;
+                    case 'v': return varyings.uv.y;
                     case 't': return _Time.y;
                     default:  return vtab[opi % 256];
                 }
@@ -155,10 +157,18 @@
                             float l = stack[stackPtr];
                             switch (opi)
                             {
-                                case '+': stack[stackPtr] = l + r; break;
-                                case '-': stack[stackPtr] = l - r; break;
-                                case '*': stack[stackPtr] = l * r; break;
-                                case '/': stack[stackPtr] = l / r; break;
+                                case 1:  stack[stackPtr] = l + r;  break;
+                                case 2:  stack[stackPtr] = l - r;  break;
+                                case 3:  stack[stackPtr] = l * r;  break;
+                                case 4:  stack[stackPtr] = l / r;  break;
+                                case 5:  stack[stackPtr] = l < r;  break;
+                                case 6:  stack[stackPtr] = l > r;  break;
+                                case 7:  stack[stackPtr] = l == r; break;
+                                case 8:  stack[stackPtr] = l <= r; break;
+                                case 9:  stack[stackPtr] = l >= r; break;
+                                case 10: stack[stackPtr] = l != r; break;
+                                case 11: stack[stackPtr] = l && r; break;
+                                case 12: stack[stackPtr] = l || r; break;
                                 default: break;
                             }
                             stackPtr++;
@@ -174,16 +184,16 @@
                         case 5: // CALL <int>
                             float4 v = 0;
                             int arity = getFunArity(opi);
-                            int i = 0;
-                            for (; i < arity; i++)
+                            int k = 0;
+                            for (; k < arity; k++)
                             {
                                 stackPtr--;
-                                v[i] = stack[stackPtr];
+                                v[k] = stack[stackPtr];
                             }
                             float4 rev = 0;
-                            for (int j = 0; j < i; j++)
+                            for (int j = 0; j < k; j++)
                             {
-                                rev[j] = v[i-1-j];
+                                rev[j] = v[k-1-j];
                             }
                             stack[stackPtr] = callFun(opi, rev);
                             stackPtr++;
@@ -193,6 +203,20 @@
                             stackPtr--;
                             float val = stack[stackPtr];
                             setVar(opi, val);
+                            break;
+
+                        case 7: // JUMP <location>
+                            i = opi;
+                            break;
+
+                        case 8: // CONDJUMP <location>
+                            stackPtr--;
+                            float cond = stack[stackPtr];
+                            if (cond == 0)
+                                i = opi;
+                            break;
+
+                        case 9: // LABEL <nop>
                             break;
                     }
                 }

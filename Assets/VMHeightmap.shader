@@ -1,9 +1,10 @@
-﻿Shader "Unlit/VM"
+﻿Shader "Unlit/VMHeightmap"
 {
     SubShader
     {
         Pass
         {
+            Cull Off
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -25,17 +26,31 @@
                 float aa : TEXCOORD1;
             };
 
+            // Program binary
             float _Program[1000];
 
-            float getVar(appdata IN, int opi)
+            // Stack machine
+            static v2f varyings;
+            static float stack[1000];
+            static int stackPtr = 0;
+            static float vtab[256];
+
+            float getVar(int opi)
             {
                 switch (opi)
                 {
-                    case 'x': return IN.uv.x;
-                    case 'y': return IN.uv.y;
+                    case 'x': return 2.0 * (varyings.uv.x - 0.5) * 10.0;
+                    case 'y': return 2.0 * (varyings.uv.y - 0.5) * 10.0;
+                    case 'u': return varyings.uv.x;
+                    case 'v': return varyings.uv.y;
                     case 't': return _Time.y;
-                    default:  return 0;
+                    default:  return vtab[opi % 256];
                 }
+            }
+
+            void setVar(int opi, float val)
+            {
+                vtab[opi % 256] = val;
             }
 
             int getFunArity(int opi)
@@ -107,9 +122,12 @@
             v2f vert (appdata IN)
             {
                 v2f o;
-                IN.uv = 2.0 * (IN.uv - 0.5) * 10.0;
+                o.vertex = UnityObjectToClipPos(IN.vertex);
+                o.uv = IN.uv;
+                o.aa = IN.vertex.z;
+                varyings = o;
+                stackPtr = 0;
 
-                float stack[1000]; int stackPtr = 0;
                 for (int i = 0; i < 1000; i += 2)
                 {
                     int instr = round(_Program[i]);
@@ -126,7 +144,7 @@
                             break;
                         
                         case 2: // PUSHVAR <char>
-                            stack[stackPtr] = getVar(IN, opi);
+                            stack[stackPtr] = getVar(opi);
                             stackPtr++;
                             break;
 
@@ -137,10 +155,18 @@
                             float l = stack[stackPtr];
                             switch (opi)
                             {
-                                case '+': stack[stackPtr] = l + r; break;
-                                case '-': stack[stackPtr] = l - r; break;
-                                case '*': stack[stackPtr] = l * r; break;
-                                case '/': stack[stackPtr] = l / r; break;
+                                case 1:  stack[stackPtr] = l + r;  break;
+                                case 2:  stack[stackPtr] = l - r;  break;
+                                case 3:  stack[stackPtr] = l * r;  break;
+                                case 4:  stack[stackPtr] = l / r;  break;
+                                case 5:  stack[stackPtr] = l < r;  break;
+                                case 6:  stack[stackPtr] = l > r;  break;
+                                case 7:  stack[stackPtr] = l == r; break;
+                                case 8:  stack[stackPtr] = l <= r; break;
+                                case 9:  stack[stackPtr] = l >= r; break;
+                                case 10: stack[stackPtr] = l != r; break;
+                                case 11: stack[stackPtr] = l && r; break;
+                                case 12: stack[stackPtr] = l || r; break;
                                 default: break;
                             }
                             stackPtr++;
@@ -156,30 +182,48 @@
                         case 5: // CALL <int>
                             float4 v = 0;
                             int arity = getFunArity(opi);
-                            int i = 0;
-                            for (; i < arity; i++)
+                            int k = 0;
+                            for (; k < arity; k++)
                             {
                                 stackPtr--;
-                                v[i] = stack[stackPtr];
+                                v[k] = stack[stackPtr];
                             }
                             float4 rev = 0;
-                            for (int j = 0; j < i; j++)
+                            for (int j = 0; j < k; j++)
                             {
-                                rev[j] = v[i-1-j];
+                                rev[j] = v[k-1-j];
                             }
                             stack[stackPtr] = callFun(opi, rev);
                             stackPtr++;
                             break;
+
+                        case 6: // SETVAR <char>
+                            stackPtr--;
+                            float val = stack[stackPtr];
+                            setVar(opi, val);
+                            break;
+
+                        case 7: // JUMP <location>
+                            i = opi;
+                            break;
+
+                        case 8: // CONDJUMP <location>
+                            stackPtr--;
+                            float cond = stack[stackPtr];
+                            if (cond == 0)
+                                i = opi;
+                            break;
+
+                        case 9: // LABEL <nop>
+                            break;
                     }
                 }
-
                 stackPtr--;
                 stackPtr = max(stackPtr, 0);
                 IN.vertex.z = stack[stackPtr];
                 o.vertex = UnityObjectToClipPos(IN.vertex);
                 o.uv = IN.uv;
                 o.aa = IN.vertex.z;
-
                 return o;
             }
 

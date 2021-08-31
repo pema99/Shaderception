@@ -9,8 +9,8 @@ public class Parser : UdonSharpBehaviour
 {
     // TODO:
     // - Error handling
-    // - Variables
-    // - Function calls
+    // - Control flow
+    // - Function calls (maybe)
 
     public InputField input;
     public Text output;
@@ -27,6 +27,7 @@ public class Parser : UdonSharpBehaviour
 
         // Parse
         currentLexed = 0;
+        labelCount = 0;
         currentParsed = 0;
         parsed = new object[1000];
         Program();
@@ -81,7 +82,27 @@ public class Parser : UdonSharpBehaviour
             case "lerp":       return 23;                    
             case "step":       return 24;            
             case "smoothstep": return 25;                            
-            default:      return 0;
+            default:           return 0;
+        }
+    }
+
+    float BinOpToIndex(string op)
+    {
+        switch (op)
+        {
+            case "+":  return 1;
+            case "-":  return 2;
+            case "*":  return 3;
+            case "/":  return 4;
+            case "<":  return 5;
+            case ">":  return 6;
+            case "=":  return 7;
+            case "<=": return 8;
+            case ">=": return 9;
+            case "!=": return 10;
+            case "&&": return 11;
+            case "||": return 12;
+            default:   return 0;
         }
     }
 
@@ -105,11 +126,11 @@ public class Parser : UdonSharpBehaviour
                     break;
                 case "BINOP":
                     program[i] = 3;
-                    program[i+1] = (float)((int)parsed[i+1]);
+                    program[i+1] = BinOpToIndex((string)parsed[i+1]);
                     break;
                 case "UNOP":
                     program[i] = 4;
-                    program[i+1] = (float)((int)parsed[i+1]);
+                    program[i+1] = (float)((int)((string)parsed[i+1])[0]);
                     break;
                 case "CALL":
                     program[i] = 5;
@@ -119,13 +140,50 @@ public class Parser : UdonSharpBehaviour
                     program[i] = 6;
                     program[i+1] = (float)((int)((string)parsed[i+1])[0]);
                     break;
+                case "JUMP":
+                    program[i] = 7;
+                    program[i+1] = (float)parsed[i+1];
+                    break;
+                case "CONDJUMP":
+                    program[i] = 8;
+                    program[i+1] = (float)parsed[i+1];
+                    break;
+                case "LABEL":
+                    program[i] = 9;
+                    program[i+1] = 0f;
+                    break;
             }
         }
 
         mat.SetFloatArray("_Program", program);
     }
 
+    // Linking
+    void Link()
+    {
+        for (int i = 0; i < parsed.Length; i += 2)
+        {
+            if (parsed[i] == null) break;
+
+            if (parsed[i] == "JUMP" || parsed[i] == "CONDJUMP")
+            {
+                string label = (string)parsed[i+1];
+                for (int j = 0; j < parsed.Length; j++)
+                {
+                    if (parsed[j] == null) break;
+
+                    if (parsed[j] == "LABEL" && parsed[j+1] == label)
+                    {
+                        parsed[i+1] = (float)j;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     // Parsing
+    int labelCount = 0;
     int currentParsed = 0;
     object[] parsed;
 
@@ -155,6 +213,11 @@ public class Parser : UdonSharpBehaviour
         return tok.Equals(Peek());
     }
 
+    bool MatchNext(object tok)
+    {
+        return tok.Equals(PeekNext());
+    }
+
     bool IsAtEnd()
     {
         return (currentLexed >= lexed.Length - 1) || (Peek() == null);
@@ -162,13 +225,17 @@ public class Parser : UdonSharpBehaviour
 
     void Program()
     {
-        while (!IsAtEnd() && !Statement())
-        {
-            Eat(); // ;
-        }
+        while (!IsAtEnd() && !Statement());
+
+        // final expression is evaluated
+        Expression();
+
+        // link up labels
+        Link();
     }
 
     // Returns: Is final statement?
+    [RecursiveMethod]
     bool Statement()
     {
         if (Peek().GetType() == typeof(string)) // potential keywords
@@ -176,37 +243,101 @@ public class Parser : UdonSharpBehaviour
             string ident = (string)Peek();
             switch (ident) // keywords
             {
-                case "let": Assignment(); return false;
-                case "fun": FuncDef();    return false;
-                default:    Expression(); return true;
+                case "set": case "let":
+                    Assignment();
+                    return false;
+                case "if":
+                    Conditional("end_"+labelCount++);
+                    return false;
+                case "while":
+                    Loop(); 
+                    return false;
+                default:
+                    return true;
             }
         }
         else
         {
-            Expression();
             return true;
         }
     }
 
-    void Assignment()
+    [RecursiveMethod]
+    void Conditional(string endLabel)
     {
-        Eat(); // let
-        object ident = Eat();
-        Eat(); // =
-        Expression();
-        Log("SETVAR", ident);
+        Eat(); // if
+        Eat(); // (
+
+        Expression(); // condition
+
+        Eat(); // )
+        Eat(); // {
+        
+        string falseLabel = "false_" + labelCount++;
+        Log("CONDJUMP", falseLabel);
+
+        while (!IsAtEnd() && !Statement());
+
+        Log("JUMP", endLabel);
+        Log("LABEL", falseLabel);
+
+        Eat(); // }
+
+        if (Match("else"))
+        {
+            Eat();
+            
+            if (Match("if")) // else if
+            {
+                Conditional(endLabel);
+            }
+            else // else
+            {
+                Eat(); // {
+                while (!IsAtEnd() && !Statement());
+                Eat(); // }
+
+                Log("LABEL", endLabel);
+            }
+        }
+        else
+        {
+            Log("LABEL", endLabel);
+        }
     }
 
-    // TODO: Ftab
-    void FuncDef()
+    [RecursiveMethod]
+    void Loop()
     {
-        Eat(); // fun
-        object ident = Eat();
+        string startLabel = "start_" + labelCount++;
+        string endLabel = "end_" + labelCount++;
+
+        Eat(); // while
         Eat(); // (
-        // ...
+        
+        Log("LABEL", startLabel);
+        Expression(); // condition
+        Log("CONDJUMP", endLabel);
+
         Eat(); // )
+        Eat(); // {
+
+        while (!IsAtEnd() && !Statement());
+        Log("JUMP", startLabel);
+        
+        Eat(); // }
+
+        Log("LABEL", endLabel);
+    }
+
+    void Assignment()
+    {
+        Eat(); // set
+        object ident = Eat();
         Eat(); // =
         Expression();
+        Eat(); // ;
+        Log("SETVAR", ident);
     }
 
     [RecursiveMethod]
@@ -227,33 +358,69 @@ public class Parser : UdonSharpBehaviour
     [RecursiveMethod]
     void Expression()
     {
-        Term();
+        Comparison();
+    }
+
+    [RecursiveMethod]
+    void Comparison()
+    {
+        AddSub();
+
+        while (true)
+        {
+            if ((Match('<') && MatchNext('=')) || (Match('>') && MatchNext('=')) || (Match('!') && MatchNext('=')) ||
+                (Match('&') && MatchNext('&')) || (Match('|') && MatchNext('|')))
+            {
+                object tok1 = Eat();
+                object tok2 = Eat();
+                AddSub();
+                Log("BINOP", tok1 + "" + tok2);
+                if (IsAtEnd()) return;
+            }
+            else if (Match('<') || Match('>') || Match('='))
+            {
+                object tok = Eat();
+                AddSub();
+                Log("BINOP", tok.ToString());
+                if (IsAtEnd()) return;
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+
+    [RecursiveMethod]
+    void AddSub()
+    {
+        MulDiv();
 
         while (Match('+') || Match('-'))
         {
             object tok = Eat();
+            MulDiv();
+            Log("BINOP", tok.ToString());
+            if (IsAtEnd()) return;
+        }
+    }
+
+    [RecursiveMethod]
+    void MulDiv()
+    {
+        Term();
+
+        while (Match('*') || Match('/'))
+        {
+            object tok = Eat();
             Term();
-            Log("BINOP", tok);
+            Log("BINOP", tok.ToString());
             if (IsAtEnd()) return;
         }
     }
 
     [RecursiveMethod]
     void Term()
-    {
-        Factor();
-
-        while (Match('*') || Match('/'))
-        {
-            object tok = Eat();
-            Factor();
-            Log("BINOP", tok);
-            if (IsAtEnd()) return;
-        }
-    }
-
-    [RecursiveMethod]
-    void Factor()
     {
         if (IsAtEnd()) return;
 
@@ -284,8 +451,8 @@ public class Parser : UdonSharpBehaviour
             else if (Peek().Equals('+') || Peek().Equals('-')) // unary op
             {
                 var op = Eat();
-                Expression();
-                Log("UNOP", op);
+                Term();
+                Log("UNOP", op.ToString());
             }
         }
     }
