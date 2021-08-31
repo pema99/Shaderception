@@ -17,18 +17,8 @@ public class Parser : UdonSharpBehaviour
         // Lex
         currentLexed = 0;
         lexed = new object[1000];
-        //Lex("2 + y * 5.3 - log2(x) / 3.3");
         Debug.Log(input.text);
         Lex(input.text);
-        /*string res = "";
-        for (int i = 0; i < lexed.Length; i++)
-        {
-            object c = lexed[i];
-            if (c == null) break;
-
-            res += c + ", ";
-        }
-        Debug.Log(res);*/
 
         // Parse
         currentLexed = 0;
@@ -41,10 +31,6 @@ public class Parser : UdonSharpBehaviour
             if (parsed[i] == null) break;
             output.text += (parsed[i] + " " + parsed[i + 1]) + "\n";
         }
-
-        // Evaluate
-        /*Evaluate();
-        Debug.Log("Result: " + Pop());*/
 
         // Write to material
         var mat = GetComponent<MeshRenderer>().sharedMaterial;
@@ -128,64 +114,6 @@ public class Parser : UdonSharpBehaviour
         }
 
         mat.SetFloatArray("_Program", program);
-    }
-
-    // Evaluation (in Udon)
-    float[] stack;
-    int stackPtr = 0;
-
-    void Push(float val)
-    {
-        stack[stackPtr++] = val;
-    }
-
-    float Pop()
-    {
-        return stack[--stackPtr];
-    }
-
-    void Evaluate()
-    {
-        stack = new float[1000];
-        stackPtr = 0;
-
-        for (int i = 0; i < parsed.Length; i += 2)
-        {
-            if (parsed[i] == null) break;
-            
-            switch (parsed[i])
-            {
-                case "PUSHCONST":
-                    Push((float)parsed[i + 1]);
-                    break;
-
-                case "PUSHVAR":
-                    // TODO
-                    break;
-
-                case "BINOP":
-                    float r = Pop(), l = Pop();
-                    switch ((char)parsed[i + 1])
-                    {
-                        case '+': Push(l + r); break;
-                        case '-': Push(l - r); break;
-                        case '*': Push(l * r); break;
-                        case '/': Push(l / r); break;
-                    }
-                    break;
-
-                case "UNOP":
-                    if (parsed[i + 1].Equals('-'))
-                    {
-                        Push(-Pop());
-                    }
-                    break;
-
-                case "CALL":
-                    // TODO
-                    break;
-            }
-        }
     }
 
     // Parsing
