@@ -15,6 +15,7 @@ public class Parser : UdonSharpBehaviour
     public InputField input;
     public Text output;
 
+    public Material screenMat;
     public Material heightMat;
 
     public override void Interact()
@@ -39,10 +40,9 @@ public class Parser : UdonSharpBehaviour
         }
 
         // Write to material
-        var mat = GetComponent<MeshRenderer>().sharedMaterial;
-        WriteProgramToMaterial(mat);
+        WriteProgramToMaterial(screenMat);
         WriteProgramToMaterial(heightMat);
-        float[] bin = mat.GetFloatArray("_Program");
+        float[] bin = screenMat.GetFloatArray("_Program");
         string res = "";
         for (int i = 0; i < bin.Length; i++)
         {

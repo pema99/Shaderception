@@ -37,7 +37,7 @@
 
             float getVar(int opi)
             {
-                switch (opi)
+                [forcecase] switch(opi)
                 {
                     case 'x': return 2.0 * (varyings.uv.x - 0.5) * 10.0;
                     case 'y': return 2.0 * (varyings.uv.y - 0.5) * 10.0;
@@ -55,7 +55,7 @@
 
             int getFunArity(int opi)
             {
-                switch (opi)
+                [forcecase] switch(opi)
                 {
                     case 1: return 1;
                     case 2: return 1;
@@ -88,7 +88,7 @@
 
             float callFun(int opi, float4 ops)
             {
-                switch (opi)
+                [forcecase] switch(opi)
                 {
                     case 1: return log(ops.x);
                     case 2: return log2(ops.x);
@@ -136,7 +136,7 @@
                     if (instr == 0)
                         break;
 
-                    switch (instr)
+                    [forcecase] switch(instr)
                     {
                         case 1: // PUSHCONST <float>
                             stack[stackPtr] = opf;
@@ -153,7 +153,7 @@
                             float r = stack[stackPtr];
                             stackPtr--;
                             float l = stack[stackPtr];
-                            switch (opi)
+                            [forcecase] switch(opi)
                             {
                                 case 1:  stack[stackPtr] = l + r;  break;
                                 case 2:  stack[stackPtr] = l - r;  break;

@@ -4,7 +4,6 @@
     {
         Pass
         {
-            Cull Off
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -23,8 +22,15 @@
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
-                float aa : TEXCOORD1;
             };
+
+            v2f vert (appdata v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+                return o;
+            }
 
             // Program binary
             float _Program[1000];
@@ -37,7 +43,7 @@
 
             float getVar(int opi)
             {
-                [forcecase] switch(opi)
+                [forcecase] switch (opi)
                 {
                     case 'x': return 2.0 * (varyings.uv.x - 0.5) * 10.0;
                     case 'y': return 2.0 * (varyings.uv.y - 0.5) * 10.0;
@@ -55,7 +61,7 @@
 
             int getFunArity(int opi)
             {
-                [forcecase] switch(opi)
+                [forcecase] switch (opi)
                 {
                     case 1: return 1;
                     case 2: return 1;
@@ -88,7 +94,7 @@
 
             float callFun(int opi, float4 ops)
             {
-                [forcecase] switch(opi)
+                [forcecase] switch (opi)
                 {
                     case 1: return log(ops.x);
                     case 2: return log2(ops.x);
@@ -119,13 +125,9 @@
                 }
             }
 
-            v2f vert (appdata IN)
+            float4 frag (v2f IN) : SV_Target
             {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(IN.vertex);
-                o.uv = IN.uv;
-                o.aa = IN.vertex.z;
-                varyings = o;
+                varyings = IN;
                 stackPtr = 0;
 
                 for (int i = 0; i < 1000; i += 2)
@@ -136,7 +138,7 @@
                     if (instr == 0)
                         break;
 
-                    [forcecase] switch(instr)
+                    [forcecase] switch (instr)
                     {
                         case 1: // PUSHCONST <float>
                             stack[stackPtr] = opf;
@@ -153,7 +155,7 @@
                             float r = stack[stackPtr];
                             stackPtr--;
                             float l = stack[stackPtr];
-                            [forcecase] switch(opi)
+                            [forcecase] switch (opi)
                             {
                                 case 1:  stack[stackPtr] = l + r;  break;
                                 case 2:  stack[stackPtr] = l - r;  break;
@@ -220,16 +222,7 @@
                 }
                 stackPtr--;
                 stackPtr = max(stackPtr, 0);
-                IN.vertex.z = stack[stackPtr];
-                o.vertex = UnityObjectToClipPos(IN.vertex);
-                o.uv = IN.uv;
-                o.aa = IN.vertex.z;
-                return o;
-            }
-
-            float4 frag (v2f IN) : SV_Target
-            {
-                return float4(IN.aa, 0, 0, 1);
+                return float4(stack[stackPtr], 0, 0, 1);
             }
             ENDCG
         }
