@@ -7,6 +7,11 @@ using UnityEngine.UI;
 
 public class Parser : UdonSharpBehaviour
 {
+    // TODO:
+    // - Error handling
+    // - Variables
+    // - Function calls
+
     public InputField input;
     public Text output;
 
@@ -24,7 +29,7 @@ public class Parser : UdonSharpBehaviour
         currentLexed = 0;
         currentParsed = 0;
         parsed = new object[1000];
-        Expression();
+        Program();
         output.text = "";
         for (int i = 0; i < parsed.Length; i += 2)
         {
@@ -110,6 +115,10 @@ public class Parser : UdonSharpBehaviour
                     program[i] = 5;
                     program[i+1] = FuncIdentToIndex((string)parsed[i+1]);
                     break;
+                case "SETVAR":
+                    program[i] = 6;
+                    program[i+1] = (float)((int)((string)parsed[i+1])[0]);
+                    break;
             }
         }
 
@@ -149,6 +158,55 @@ public class Parser : UdonSharpBehaviour
     bool IsAtEnd()
     {
         return (currentLexed >= lexed.Length - 1) || (Peek() == null);
+    }
+
+    void Program()
+    {
+        while (!IsAtEnd() && !Statement())
+        {
+            Eat(); // ;
+        }
+    }
+
+    // Returns: Is final statement?
+    bool Statement()
+    {
+        if (Peek().GetType() == typeof(string)) // potential keywords
+        {
+            string ident = (string)Peek();
+            switch (ident) // keywords
+            {
+                case "let": Assignment(); return false;
+                case "fun": FuncDef();    return false;
+                default:    Expression(); return true;
+            }
+        }
+        else
+        {
+            Expression();
+            return true;
+        }
+    }
+
+    void Assignment()
+    {
+        Eat(); // let
+        object ident = Eat();
+        Eat(); // =
+        Expression();
+        Log("SETVAR", ident);
+    }
+
+    // TODO: Ftab
+    void FuncDef()
+    {
+        Eat(); // fun
+        object ident = Eat();
+        Eat(); // (
+        // ...
+        Eat(); // )
+        Eat(); // =
+        Expression();
     }
 
     [RecursiveMethod]
@@ -283,7 +341,7 @@ public class Parser : UdonSharpBehaviour
             }
 
             // whitespace
-            else if (c == ' ' || c == '\t')
+            else if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
             {
                 i++;
             }

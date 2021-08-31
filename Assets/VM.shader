@@ -32,17 +32,29 @@
                 return o;
             }
 
+            // Program binary
             float _Program[1000];
 
-            float getVar(v2f IN, int opi)
+            // Stack machine
+            static v2f varyings;
+            static float stack[1000];
+            static int stackPtr = 0;
+            static float vtab[256];
+
+            float getVar(int opi)
             {
                 switch (opi)
                 {
-                    case 'x': return IN.uv.x;
-                    case 'y': return IN.uv.y;
+                    case 'x': return varyings.uv.x;
+                    case 'y': return varyings.uv.y;
                     case 't': return _Time.y;
-                    default:  return 0;
+                    default:  return vtab[opi % 256];
                 }
+            }
+
+            void setVar(int opi, float val)
+            {
+                vtab[opi % 256] = val;
             }
 
             int getFunArity(int opi)
@@ -113,7 +125,9 @@
 
             float4 frag (v2f IN) : SV_Target
             {
-                float stack[1000]; int stackPtr = 0;
+                varyings = IN;
+                stackPtr = 0;
+
                 for (int i = 0; i < 1000; i += 2)
                 {
                     int instr = round(_Program[i]);
@@ -130,7 +144,7 @@
                             break;
                         
                         case 2: // PUSHVAR <char>
-                            stack[stackPtr] = getVar(IN, opi);
+                            stack[stackPtr] = getVar(opi);
                             stackPtr++;
                             break;
 
@@ -173,6 +187,12 @@
                             }
                             stack[stackPtr] = callFun(opi, rev);
                             stackPtr++;
+                            break;
+
+                        case 6: // SETVAR <char>
+                            stackPtr--;
+                            float val = stack[stackPtr];
+                            setVar(opi, val);
                             break;
                     }
                 }
