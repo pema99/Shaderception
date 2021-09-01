@@ -9,7 +9,9 @@ public class Parser : UdonSharpBehaviour
 {
     // TODO:
     // - Error handling
-    // - Control flow
+    // - Get get pixel from last frames data
+    // - Get audiolink value
+    // - Swizzle assignments
     // - Function calls (maybe)
 
     public InputField input;
@@ -42,11 +44,11 @@ public class Parser : UdonSharpBehaviour
         // Write to material
         WriteProgramToMaterial(screenMat);
         WriteProgramToMaterial(heightMat);
-        float[] bin = screenMat.GetFloatArray("_Program");
+        Vector4[] bin = screenMat.GetVectorArray("_Program");
         string res = "";
         for (int i = 0; i < bin.Length; i++)
         {
-            if (i % 2 == 0 && bin[i] == 0) break;
+            if (i % 2 == 0 && bin[i] == Vector4.zero) break;
             res += bin[i] + ", ";
         }
         Debug.Log(res);
@@ -81,7 +83,11 @@ public class Parser : UdonSharpBehaviour
             case "clamp":      return 22;                    
             case "lerp":       return 23;                    
             case "step":       return 24;            
-            case "smoothstep": return 25;                            
+            case "smoothstep": return 25;
+            case "float2":     return 26;
+            case "float3":     return 27;
+            case "float4":     return 28;
+            case "swizzle":    return 29;                            
             default:           return 0;
         }
     }
@@ -108,54 +114,75 @@ public class Parser : UdonSharpBehaviour
 
     void WriteProgramToMaterial(Material mat)
     {
-        float[] program = new float[1000];
+        Vector4 one = new Vector4(1, 0, 0, 0);
+
+        Vector4[] program = new Vector4[1000];
 
         for (int i = 0; i < parsed.Length; i += 2)
         {
-            if (parsed[i] == null) program[i] = 0;
+            if (parsed[i] == null) program[i] = Vector4.zero;
 
             switch (parsed[i])
             {
                 case "PUSHCONST":
-                    program[i] = 1;
-                    program[i+1] = (float)parsed[i+1];
+                    program[i] = one * 1;
+                    program[i+1] = (Vector4)parsed[i+1];
                     break;
                 case "PUSHVAR":
-                    program[i] = 2;
-                    program[i+1] = (float)((int)((string)parsed[i+1])[0]);
+                    program[i] = one * 2;
+                    program[i+1] = one * (float)((int)((string)parsed[i+1])[0]); // TODO 4 char names
                     break;
                 case "BINOP":
-                    program[i] = 3;
-                    program[i+1] = BinOpToIndex((string)parsed[i+1]);
+                    program[i] = one * 3;
+                    program[i+1] = one * BinOpToIndex((string)parsed[i+1]);
                     break;
                 case "UNOP":
-                    program[i] = 4;
-                    program[i+1] = (float)((int)((string)parsed[i+1])[0]);
+                    program[i] = one * 4;
+                    program[i+1] = one * (float)((int)((string)parsed[i+1])[0]);
                     break;
                 case "CALL":
-                    program[i] = 5;
-                    program[i+1] = FuncIdentToIndex((string)parsed[i+1]);
+                    program[i] = one * 5;
+                    program[i+1] = one * FuncIdentToIndex((string)parsed[i+1]);
                     break;
                 case "SETVAR":
-                    program[i] = 6;
-                    program[i+1] = (float)((int)((string)parsed[i+1])[0]);
+                    program[i] = one * 6;
+                    program[i+1] = one * (float)((int)((string)parsed[i+1])[0]);
+                    if (((string)parsed[i+1]).Contains(".")) // swizzle assignments
+                    {
+                        string swizzle = ((string)parsed[i+1]).Split('.')[1];
+                        string mask = "";
+                        for (int j = 0; j < 4; j++)
+                        {
+                            if (j >= swizzle.Length)
+                                break;
+
+                            switch (swizzle[j])
+                            {
+                                case 'x': case 'r': mask += '1'; break;
+                                case 'y': case 'g': mask += '2'; break;
+                                case 'z': case 'b': mask += '3'; break;
+                                case 'w': case 'a': mask += '4'; break;
+                            }
+                        }
+                        program[i+1].y = float.Parse(mask);
+                    }
                     break;
                 case "JUMP":
-                    program[i] = 7;
-                    program[i+1] = (float)parsed[i+1];
+                    program[i] = one * 7;
+                    program[i+1] = one * (float)parsed[i+1];
                     break;
                 case "CONDJUMP":
-                    program[i] = 8;
-                    program[i+1] = (float)parsed[i+1];
+                    program[i] = one * 8;
+                    program[i+1] = one * (float)parsed[i+1];
                     break;
                 case "LABEL":
-                    program[i] = 9;
-                    program[i+1] = 0f;
+                    program[i] = one * 9;
+                    program[i+1] = Vector4.zero;
                     break;
             }
         }
 
-        mat.SetFloatArray("_Program", program);
+        mat.SetVectorArray("_Program", program);
     }
 
     // Linking
@@ -187,7 +214,7 @@ public class Parser : UdonSharpBehaviour
     int currentParsed = 0;
     object[] parsed;
 
-    void Log(string instr, object op)
+    void Emit(string instr, object op)
     {
         parsed[currentParsed++] = instr;
         parsed[currentParsed++] = op;
@@ -274,12 +301,12 @@ public class Parser : UdonSharpBehaviour
         Eat(); // {
         
         string falseLabel = "false_" + labelCount++;
-        Log("CONDJUMP", falseLabel);
+        Emit("CONDJUMP", falseLabel);
 
         while (!IsAtEnd() && !Statement());
 
-        Log("JUMP", endLabel);
-        Log("LABEL", falseLabel);
+        Emit("JUMP", endLabel);
+        Emit("LABEL", falseLabel);
 
         Eat(); // }
 
@@ -297,12 +324,12 @@ public class Parser : UdonSharpBehaviour
                 while (!IsAtEnd() && !Statement());
                 Eat(); // }
 
-                Log("LABEL", endLabel);
+                Emit("LABEL", endLabel);
             }
         }
         else
         {
-            Log("LABEL", endLabel);
+            Emit("LABEL", endLabel);
         }
     }
 
@@ -315,29 +342,35 @@ public class Parser : UdonSharpBehaviour
         Eat(); // while
         Eat(); // (
         
-        Log("LABEL", startLabel);
+        Emit("LABEL", startLabel);
         Expression(); // condition
-        Log("CONDJUMP", endLabel);
+        Emit("CONDJUMP", endLabel);
 
         Eat(); // )
         Eat(); // {
 
         while (!IsAtEnd() && !Statement());
-        Log("JUMP", startLabel);
+        Emit("JUMP", startLabel);
         
         Eat(); // }
 
-        Log("LABEL", endLabel);
+        Emit("LABEL", endLabel);
     }
 
     void Assignment()
     {
         Eat(); // set
-        object ident = Eat();
+        string ident = (string)Eat();
+        if (Match('.'))
+        {
+            Eat();
+            string swizzle = (string)Eat();
+            ident += "." + swizzle;
+        }
         Eat(); // =
         Expression();
         Eat(); // ;
-        Log("SETVAR", ident);
+        Emit("SETVAR", ident);
     }
 
     [RecursiveMethod]
@@ -352,7 +385,7 @@ public class Parser : UdonSharpBehaviour
             Expression();
         }
         Eat(); // rparen
-        Log("CALL", ident);
+        Emit("CALL", ident);
     }
 
     [RecursiveMethod]
@@ -374,14 +407,14 @@ public class Parser : UdonSharpBehaviour
                 object tok1 = Eat();
                 object tok2 = Eat();
                 AddSub();
-                Log("BINOP", tok1 + "" + tok2);
+                Emit("BINOP", tok1 + "" + tok2);
                 if (IsAtEnd()) return;
             }
             else if (Match('<') || Match('>') || Match('='))
             {
                 object tok = Eat();
                 AddSub();
-                Log("BINOP", tok.ToString());
+                Emit("BINOP", tok.ToString());
                 if (IsAtEnd()) return;
             }
             else
@@ -400,7 +433,7 @@ public class Parser : UdonSharpBehaviour
         {
             object tok = Eat();
             MulDiv();
-            Log("BINOP", tok.ToString());
+            Emit("BINOP", tok.ToString());
             if (IsAtEnd()) return;
         }
     }
@@ -414,7 +447,7 @@ public class Parser : UdonSharpBehaviour
         {
             object tok = Eat();
             Term();
-            Log("BINOP", tok.ToString());
+            Emit("BINOP", tok.ToString());
             if (IsAtEnd()) return;
         }
     }
@@ -429,31 +462,56 @@ public class Parser : UdonSharpBehaviour
         {
             if ('('.Equals(PeekNext())) // function call
             {
+                // TODO: Codegen for constant vector constructors
                 FuncCall();
             }
             else // var access
             {
-                Log("PUSHVAR", Eat());
+                Emit("PUSHVAR", Eat());
             }
         }
         else if (type == typeof(float)) // literal
         {
-            Log("PUSHCONST", Eat());
+            Emit("PUSHCONST", new Vector4((float)Eat(), 0, 0, 0));
         }
         else if (type == typeof(char))
         {
-            if (Peek().Equals('(')) // grouped
+            if (Match('(')) // grouped
             {
                 Eat();
                 Expression();
                 Eat();
             }
-            else if (Peek().Equals('+') || Peek().Equals('-')) // unary op
+            else if (Match('+') || Match('-')) // unary op
             {
                 var op = Eat();
                 Term();
-                Log("UNOP", op.ToString());
+                Emit("UNOP", op.ToString());
             }
+        }
+
+        // Swizzling
+        if (Match('.'))
+        {
+            Eat();
+
+            string swizzle = (string)Eat();
+            Vector4 res = Vector4.zero;
+            for (int i = 0; i < 4; i++)
+            {
+                if (i >= swizzle.Length) break;
+
+                switch (swizzle[i])
+                {
+                    case 'x': case 'r': res[i] = 1; break;
+                    case 'y': case 'g': res[i] = 2; break;
+                    case 'z': case 'b': res[i] = 3; break;
+                    case 'w': case 'a': res[i] = 4; break;
+                }
+            }
+
+            Emit("PUSHCONST", res);
+            Emit("CALL", "swizzle");
         }
     }
 
@@ -468,7 +526,7 @@ public class Parser : UdonSharpBehaviour
 
     bool IsNumeric(char c)
     {
-        return (c >= '0' && c <= '9') || (c == '.');
+        return (c >= '0' && c <= '9');
     }
 
     bool IsAlphaNumeric(char c)
@@ -497,8 +555,8 @@ public class Parser : UdonSharpBehaviour
             // numeric
             else if (IsNumeric(c))
             {
-                string ident = "";
-                while (i < input.Length && IsNumeric(input[i]))
+                string ident = ""; 
+                while (i < input.Length && (IsNumeric(input[i]) || input[i] == '.')) // TODO: Only eat 1 period
                 {
                     ident += input[i++];
                 }
