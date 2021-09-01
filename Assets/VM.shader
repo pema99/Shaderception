@@ -76,15 +76,7 @@
 
             float4 getVar(int opi)
             {
-                [forcecase] switch(opi)
-                {
-                    case 'x': return 2.0 * (varyings.uv.x - 0.5) * 10.0;
-                    case 'y': return 2.0 * (varyings.uv.y - 0.5) * 10.0;
-                    case 'u': return varyings.uv.x;
-                    case 'v': return varyings.uv.y;
-                    case 't': return _Time.y;
-                    default:  return vtab[opi % 256];
-                }
+                return vtab[opi % 256];
             }
 
             void setVar(int opi, uint rawMask, float4 val)
@@ -132,6 +124,10 @@
                     case 27: return 3;
                     case 28: return 4;
                     case 29: return 2;
+                    case 30: return 0;
+                    case 31: return 0;
+                    case 32: return 0;
+                    case 33: return 0;
                     default: return 0; 
                 }
             }
@@ -169,6 +165,10 @@
                     case 27: return float4(ops[0].x, ops[1].x, ops[2].x, 0);
                     case 28: return float4(ops[0].x, ops[1].x, ops[2].x, ops[3].x);
                     case 29: return swizzle(ops[0], ops[1]);
+                    case 30: return float4(varyings.uv, 0, 0);
+                    case 31: return float4(2.0 * (varyings.uv - 0.5) * 10.0, 0, 0);
+                    case 32: return _Time;
+                    case 33: return round(ops[0]);
                     default: return 0; 
                 }
             }
@@ -205,9 +205,9 @@
 
                         case 3: // BINOP <char>
                             stackPtr--;
-                            float r = stack[stackPtr];
+                            float4 r = stack[stackPtr];
                             stackPtr--;
-                            float l = stack[stackPtr];
+                            float4 l = stack[stackPtr];
                             [forcecase] switch(opi)
                             {
                                 case 1:  stack[stackPtr] = l + r;  break;
@@ -229,7 +229,7 @@
 
                         case 4: // UNOP <char>
                             stackPtr--;
-                            float rr = stack[stackPtr];
+                            float4 rr = stack[stackPtr];
                             stack[stackPtr] = opi == '-' ? -rr : rr;
                             stackPtr++;
                             break;
@@ -264,8 +264,8 @@
 
                         case 8: // CONDJUMP <location>
                             stackPtr--;
-                            float cond = stack[stackPtr];
-                            if (cond == 0)
+                            float4 cond = stack[stackPtr];
+                            if (cond.x == 0)
                                 i = opi;
                             break;
 

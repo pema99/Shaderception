@@ -11,8 +11,8 @@ public class Parser : UdonSharpBehaviour
     // - Error handling
     // - Get get pixel from last frames data
     // - Get audiolink value
-    // - Swizzle assignments
     // - Function calls (maybe)
+    // - Explicit returns
 
     public InputField input;
     public Text output;
@@ -28,17 +28,28 @@ public class Parser : UdonSharpBehaviour
         Debug.Log(input.text);
         Lex(input.text);
 
-        // Parse
+        // Parse / codegen
         currentLexed = 0;
         labelCount = 0;
+        currentFunc = 0;
+        funcIdents = new string[1000];
+        funcParams = new string[1000][];
+        funcIdents[0] = "global";
         currentParsed = 0;
-        parsed = new object[1000];
-        Program();
+        parsed = new object[1000][];
+        parsed[0] = new object[1000];
+        Block();
+
+        // Linking
+        regCount = 0;
+        currentLinked = 0;
+        linked = new object[1000];
+        Link();
         output.text = "";
-        for (int i = 0; i < parsed.Length; i += 2)
+        for (int i = 0; i < linked.Length; i += 2)
         {
-            if (parsed[i] == null) break;
-            output.text += (parsed[i] + " " + parsed[i + 1]) + "\n";
+            if (linked[i] == null) break;
+            output.text += (linked[i] + " " + linked[i + 1]) + "\n";
         }
 
         // Write to material
@@ -87,7 +98,11 @@ public class Parser : UdonSharpBehaviour
             case "float2":     return 26;
             case "float3":     return 27;
             case "float4":     return 28;
-            case "swizzle":    return 29;                            
+            case "swizzle":    return 29;          
+            case "uv":         return 30;
+            case "xy":         return 31;
+            case "time":       return 32;
+            case "round":      return 33;                  
             default:           return 0;
         }
     }
@@ -118,38 +133,39 @@ public class Parser : UdonSharpBehaviour
 
         Vector4[] program = new Vector4[1000];
 
-        for (int i = 0; i < parsed.Length; i += 2)
+        for (int i = 0; i < linked.Length; i += 2)
         {
-            if (parsed[i] == null) program[i] = Vector4.zero;
+            if (linked[i] == null) program[i] = Vector4.zero;
 
-            switch (parsed[i])
+            switch (linked[i])
             {
                 case "PUSHCONST":
                     program[i] = one * 1;
-                    program[i+1] = (Vector4)parsed[i+1];
+                    program[i+1] = (Vector4)linked[i+1];
                     break;
                 case "PUSHVAR":
                     program[i] = one * 2;
-                    program[i+1] = one * (float)((int)((string)parsed[i+1])[0]); // TODO 4 char names
+                    program[i+1] = one * float.Parse((string)linked[i+1]);
                     break;
                 case "BINOP":
                     program[i] = one * 3;
-                    program[i+1] = one * BinOpToIndex((string)parsed[i+1]);
+                    program[i+1] = one * BinOpToIndex((string)linked[i+1]);
                     break;
                 case "UNOP":
                     program[i] = one * 4;
-                    program[i+1] = one * (float)((int)((string)parsed[i+1])[0]);
+                    program[i+1] = one * (float)((int)((string)linked[i+1])[0]);
                     break;
                 case "CALL":
                     program[i] = one * 5;
-                    program[i+1] = one * FuncIdentToIndex((string)parsed[i+1]);
+                    program[i+1] = one * FuncIdentToIndex((string)linked[i+1]);
                     break;
                 case "SETVAR":
                     program[i] = one * 6;
-                    program[i+1] = one * (float)((int)((string)parsed[i+1])[0]);
-                    if (((string)parsed[i+1]).Contains(".")) // swizzle assignments
+                    string[] parts = ((string)linked[i+1]).Split('.');
+                    program[i+1] = one * float.Parse((string)linked[i+1]);
+                    if (parts.Length > 1) // swizzle assignments
                     {
-                        string swizzle = ((string)parsed[i+1]).Split('.')[1];
+                        string swizzle = parts[1];
                         string mask = "";
                         for (int j = 0; j < 4; j++)
                         {
@@ -169,11 +185,11 @@ public class Parser : UdonSharpBehaviour
                     break;
                 case "JUMP":
                     program[i] = one * 7;
-                    program[i+1] = one * (float)parsed[i+1];
+                    program[i+1] = one * (float)linked[i+1];
                     break;
                 case "CONDJUMP":
                     program[i] = one * 8;
-                    program[i+1] = one * (float)parsed[i+1];
+                    program[i+1] = one * (float)linked[i+1];
                     break;
                 case "LABEL":
                     program[i] = one * 9;
@@ -186,23 +202,126 @@ public class Parser : UdonSharpBehaviour
     }
 
     // Linking
+    int regCount = 0;
+    string[] renameFrom;
+    string[] renameTo;
+    int currentLinked;
+    object[] linked;
+
+    [RecursiveMethod]
+    void Inline(int id)
+    {
+        Debug.Log("Inlining " + id + " " + funcIdents[id]);
+
+        for (int i = 0; i < parsed[id].Length; i += 2)
+        {
+            if (parsed[id][i] == null) break;
+
+            // User function, inline
+            if (parsed[id][i] == "CALL" && FuncIdentToIndex((string)parsed[id][i+1]) == 0)
+            {
+                for (int j = 0; j < funcIdents.Length; j++) // find body of function to inline
+                {
+                    if (funcIdents[j] == null) break;
+
+                    if (funcIdents[j].Equals(parsed[id][i+1]))
+                    {
+                        // setup renaming table
+                        renameFrom = funcParams[j];
+                        renameTo = new string[renameFrom.Length];
+                        for (int k = 0; k < renameTo.Length; k++)
+                        {
+                            if (renameFrom[k] == null) break;
+                            renameTo[k] = "_reg" + regCount++;
+                        }
+
+                        // recursively inline function
+                        Inline(j);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // Rename variables
+                if (parsed[id][i] == "PUSHVAR" || parsed[id][i] == "SETVAR")
+                {
+                    string ident = (string)parsed[id][i+1];
+                    if (renameFrom != null)
+                    {
+                        for (int j = 0; j < renameFrom.Length; j++)
+                        {
+                            if (ident == renameFrom[j])
+                            {
+                                Debug.Log(renameFrom[j] + " + " + ident);
+                                parsed[id][i+1] = renameTo[j];
+                                break;
+                            }
+                        }
+                    }
+                }
+                linked[currentLinked++] = parsed[id][i];
+                linked[currentLinked++] = parsed[id][i+1];
+            }
+        }
+    }
+
     void Link()
     {
-        for (int i = 0; i < parsed.Length; i += 2)
+        renameFrom = null;
+        renameTo = null;
+
+        // Inlining, start with global scope
+        Inline(0);
+
+        // Jump location linking
+        for (int i = 0; i < linked.Length; i += 2)
         {
-            if (parsed[i] == null) break;
+            if (linked[i] == null) break;
 
-            if (parsed[i] == "JUMP" || parsed[i] == "CONDJUMP")
+            if (linked[i] == "JUMP" || linked[i] == "CONDJUMP")
             {
-                string label = (string)parsed[i+1];
-                for (int j = 0; j < parsed.Length; j++)
+                string label = (string)linked[i+1];
+                for (int j = 0; j < linked.Length; j++)
                 {
-                    if (parsed[j] == null) break;
+                    if (linked[j] == null) break;
 
-                    if (parsed[j] == "LABEL" && parsed[j+1] == label)
+                    if (linked[j] == "LABEL" && linked[j+1] == label)
                     {
-                        parsed[i+1] = (float)j;
+                        linked[i+1] = (float)j;
                         break;
+                    }
+                }
+            }
+        }
+
+        // Register allocation, unfortunately O(n^2)
+        int regAlloc = 0;
+        for (int i = 0; i < linked.Length; i += 2)
+        {
+            if (linked[i] == null) break;
+
+            if (linked[i] == "PUSHVAR" || linked[i] == "SETVAR")
+            {
+                string reg = (regAlloc++).ToString();
+                string[] a = linked[i+1].ToString().Split('.');
+
+                for (int j = 0; j < linked.Length; j += 2)
+                {
+                    if (linked[j] == null) break;
+
+                    string[] b = linked[j+1].ToString().Split('.');
+
+                    if ((linked[j] == "PUSHVAR" || linked[j] == "SETVAR") && a[0] == b[0])
+                    {
+                        if (b.Length > 1) // handle swizzle
+                        {
+                            linked[j+1] = reg + b[1];
+                        }
+                        else
+                        {
+                            linked[j+1] = reg;
+                        }
                     }
                 }
             }
@@ -211,13 +330,47 @@ public class Parser : UdonSharpBehaviour
 
     // Parsing
     int labelCount = 0;
+    int currentFunc = 0;
+    string[] funcIdents;
+    string[][] funcParams;
+    int prevParsed = 0;
     int currentParsed = 0;
-    object[] parsed;
+    object[][] parsed;
+
+    void SwitchToFunction(string ident, string[] parameters)
+    {
+        for (int i = 0; i < funcIdents.Length; i++)
+        {
+            if (string.IsNullOrEmpty(funcIdents[i]))
+            {
+                funcIdents[i] = ident;
+                funcParams[i] = parameters;
+                parsed[i] = new object[1000];
+            }
+
+            if (funcIdents[i] == ident)
+            {
+                if (currentFunc == 0)
+                {
+                    prevParsed = currentParsed;
+                }
+                currentParsed = 0;
+                currentFunc = i;
+                break;
+            }
+        }
+    }
+
+    void SwitchToGlobal()
+    {
+        currentParsed = prevParsed;
+        currentFunc = 0;
+    }
 
     void Emit(string instr, object op)
     {
-        parsed[currentParsed++] = instr;
-        parsed[currentParsed++] = op;
+        parsed[currentFunc][currentParsed++] = instr;
+        parsed[currentFunc][currentParsed++] = op;
     }
 
     object Peek()
@@ -250,15 +403,13 @@ public class Parser : UdonSharpBehaviour
         return (currentLexed >= lexed.Length - 1) || (Peek() == null);
     }
 
-    void Program()
+    [RecursiveMethod]
+    void Block()
     {
         while (!IsAtEnd() && !Statement());
 
         // final expression is evaluated
         Expression();
-
-        // link up labels
-        Link();
     }
 
     // Returns: Is final statement?
@@ -279,6 +430,9 @@ public class Parser : UdonSharpBehaviour
                 case "while":
                     Loop(); 
                     return false;
+                case "fun":
+                    FuncDef();
+                    return false;
                 default:
                     return true;
             }
@@ -287,6 +441,47 @@ public class Parser : UdonSharpBehaviour
         {
             return true;
         }
+    }
+
+    [RecursiveMethod]
+    void FuncDef()
+    {
+        string[] parameters = new string[16];
+
+        Eat(); // fun
+        string ident = (string)Eat();
+        Eat(); // (
+
+        int arity = 0;
+        if (Peek().GetType() == typeof(string)) // has parameters
+        {
+            parameters[arity++] = (string)Eat();
+            while (Match(','))
+            {
+                Eat(); // ,
+                parameters[arity++] = (string)Eat();
+            }
+        }
+
+        Eat(); // )
+        Eat(); // {
+
+        // emit body into correct store
+        SwitchToFunction(ident, parameters);
+
+        // pop parameters from stack in reverse order and put in registers
+        for (int i = 0; i < arity; i++)
+        {
+            Emit("SETVAR", parameters[arity-1-i]);
+        }
+
+        // body
+        Block();
+
+        // restore global store
+        SwitchToGlobal();
+
+        Eat(); // }
     }
 
     [RecursiveMethod]
@@ -303,7 +498,7 @@ public class Parser : UdonSharpBehaviour
         string falseLabel = "false_" + labelCount++;
         Emit("CONDJUMP", falseLabel);
 
-        while (!IsAtEnd() && !Statement());
+        Block();
 
         Emit("JUMP", endLabel);
         Emit("LABEL", falseLabel);
@@ -321,7 +516,7 @@ public class Parser : UdonSharpBehaviour
             else // else
             {
                 Eat(); // {
-                while (!IsAtEnd() && !Statement());
+                Block();
                 Eat(); // }
 
                 Emit("LABEL", endLabel);
@@ -349,7 +544,7 @@ public class Parser : UdonSharpBehaviour
         Eat(); // )
         Eat(); // {
 
-        while (!IsAtEnd() && !Statement());
+        Block();
         Emit("JUMP", startLabel);
         
         Eat(); // }

@@ -150,9 +150,9 @@
 
                         case 3: // BINOP <char>
                             stackPtr--;
-                            float r = stack[stackPtr];
+                            float4 r = stack[stackPtr];
                             stackPtr--;
-                            float l = stack[stackPtr];
+                            float4 l = stack[stackPtr];
                             [forcecase] switch(opi)
                             {
                                 case 1:  stack[stackPtr] = l + r;  break;
@@ -174,7 +174,7 @@
 
                         case 4: // UNOP <char>
                             stackPtr--;
-                            float rr = stack[stackPtr];
+                            float4 rr = stack[stackPtr];
                             stack[stackPtr] = opi == '-' ? -rr : rr;
                             stackPtr++;
                             break;
@@ -199,7 +199,7 @@
 
                         case 6: // SETVAR <char>
                             stackPtr--;
-                            float val = stack[stackPtr];
+                            float4 val = stack[stackPtr];
                             setVar(opi, val);
                             break;
 
@@ -209,8 +209,8 @@
 
                         case 8: // CONDJUMP <location>
                             stackPtr--;
-                            float cond = stack[stackPtr];
-                            if (cond == 0)
+                            float4 cond = stack[stackPtr];
+                            if (cond.x == 0)
                                 i = opi;
                             break;
 
