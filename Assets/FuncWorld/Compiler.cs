@@ -5,7 +5,7 @@ using VRC.SDKBase;
 using VRC.Udon;
 using UnityEngine.UI;
 
-public class Parser : UdonSharpBehaviour
+public class Compiler : UdonSharpBehaviour
 {
     // TODO:
     // - Error handling
