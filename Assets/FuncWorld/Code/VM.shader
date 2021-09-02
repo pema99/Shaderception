@@ -27,7 +27,7 @@
             };
 
             // Program binary
-            float4 _Program[4000];
+            float4 _Program[1000];
 
             // Stack machine
             static v2f varyings;
@@ -129,8 +129,10 @@
                 //   on the inputs. For swizzles and vector constructors, we
                 //   don't want to set sentinality based on inputs, so this
                 //   skips those. Remember, the ops matrix is an reverse order.
-                if (opi >= 1 && opi <= 25) return ops[arity-1];
-                else return 0;
+                if ((opi >= 1 && opi <= 25) || opi == 37  || opi == 39 || opi == 40)
+                    return ops[arity-1];
+                else
+                    return 0;
             }
 
             int getFunArity(int opi)
@@ -170,6 +172,13 @@
                     case 31: return 0;
                     case 32: return 0;
                     case 33: return 0;
+                    case 34: return 2;
+                    case 35: return 2;
+                    case 36: return 2;
+                    case 37: return 1;
+                    case 38: return 1;
+                    case 39: return 2;
+                    case 40: return 3;
                     default: return 0; 
                 }
             }
@@ -211,6 +220,13 @@
                     case 31: return float4(2.0 * (varyings.uv - 0.5) * 10.0, getSentinel().xx);
                     case 32: return _Time;
                     case 33: return round(ops[0]);
+                    case 34: return float4(dot(ops[0], ops[1]), getSentinel().xxx);
+                    case 35: return float4(cross(ops[0], ops[1]), getSentinel().x);
+                    case 36: return float4(distance(ops[0], ops[1]), getSentinel().xxx);
+                    case 37: return normalize(ops[0]);
+                    case 38: return float4(length(ops[0]), getSentinel().xxx);
+                    case 39: return reflect(ops[0], ops[1]);
+                    case 40: return refract(ops[0], ops[1], ops[2].x);
                     default: return 0; 
                 }
             }

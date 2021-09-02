@@ -99,7 +99,14 @@ public class Compiler : UdonSharpBehaviour
             case "uv":         return 30;
             case "xy":         return 31;
             case "time":       return 32;
-            case "round":      return 33;                  
+            case "round":      return 33;
+            case "dot":        return 34;
+            case "cross":      return 35;
+            case "distance":   return 36;
+            case "normalize":  return 37;
+            case "length":     return 38;
+            case "reflect":    return 39;
+            case "refract":    return 40;    
             default:           return 0;
         }
     }
