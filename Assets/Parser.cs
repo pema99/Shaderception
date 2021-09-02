@@ -24,7 +24,7 @@ public class Parser : UdonSharpBehaviour
     {
         // Lex
         currentLexed = 0;
-        lexed = new object[1000];
+        lexed = new object[4000];
         Debug.Log(input.text);
         Lex(input.text);
 
@@ -32,18 +32,18 @@ public class Parser : UdonSharpBehaviour
         currentLexed = 0;
         labelCount = 0;
         currentFunc = 0;
-        funcIdents = new string[1000];
-        funcParams = new string[1000][];
+        funcIdents = new string[4000];
+        funcParams = new string[4000][];
         funcIdents[0] = "global";
         currentParsed = 0;
-        parsed = new object[1000][];
-        parsed[0] = new object[1000];
+        parsed = new object[4000][];
+        parsed[0] = new object[4000];
         Block();
 
         // Linking
         regCount = 0;
         currentLinked = 0;
-        linked = new object[1000];
+        linked = new object[4000];
         Link();
         output.text = "";
         for (int i = 0; i < linked.Length; i += 2)
@@ -129,9 +129,9 @@ public class Parser : UdonSharpBehaviour
 
     void WriteProgramToMaterial(Material mat)
     {
-        Vector4 one = new Vector4(1, 0, 0, 0);
+        Vector4 one = new Vector4(1, float.NaN, float.NaN, float.NaN);
 
-        Vector4[] program = new Vector4[1000];
+        Vector4[] program = new Vector4[4000];
 
         for (int i = 0; i < linked.Length; i += 2)
         {
@@ -358,7 +358,7 @@ public class Parser : UdonSharpBehaviour
             {
                 funcIdents[i] = ident;
                 funcParams[i] = parameters;
-                parsed[i] = new object[1000];
+                parsed[i] = new object[4000];
             }
 
             if (funcIdents[i] == ident)
@@ -680,7 +680,7 @@ public class Parser : UdonSharpBehaviour
         }
         else if (type == typeof(float)) // literal
         {
-            Emit("PUSHCONST", new Vector4((float)Eat(), 0, 0, 0));
+            Emit("PUSHCONST", new Vector4((float)Eat(), float.NaN, float.NaN, float.NaN));
         }
         else if (type == typeof(char))
         {

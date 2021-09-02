@@ -27,21 +27,45 @@
             };
 
             // Program binary
-            float4 _Program[1000];
+            float4 _Program[4000];
 
             // Stack machine
             static v2f varyings;
-            static float4 stack[128]; // TODO LOWER
+            static float4 stack[128];
             static int stackPtr = 0;
             static float4 vtab[256];
 
+            // This is so monstrously cursed
+            uint4 _Sentinel;
+            float4 isSentinel(float4 val)
+            {
+                return isnan(asfloat(_Sentinel ^ asuint(val)));
+            }
+
+            float4 getSentinel()
+            {
+                return asfloat(-1);
+            }
+
+            float4 maskSentinel(float4 val, float to)
+            {
+                return isSentinel(val) ? to : val;
+            }
+
+            uint getDimension(float4 val)
+            {
+                return dot(1, isSentinel(val) ? 0 : 1);
+            }
+
             float4 swizzle(float4 val, float4 mask)
             {
-                float4 res = 0;
+                float4 res = getSentinel();
                 for (int i = 0; i < 4; i++)
                 {
                     if (mask[i] > 0)
+                    {
                         res[i] = val[mask[i]-1];
+                    }
                 }
                 return res;
             }
@@ -95,15 +119,15 @@
             {
                 [forcecase] switch(opi)
                 {
-                    case 1: return 1;
-                    case 2: return 1;
-                    case 3: return 1;
-                    case 4: return 1;
-                    case 5: return 1;
-                    case 6: return 1;
-                    case 7: return 1;
-                    case 8: return 1;
-                    case 9: return 2;
+                    case 1:  return 1;
+                    case 2:  return 1;
+                    case 3:  return 1;
+                    case 4:  return 1;
+                    case 5:  return 1;
+                    case 6:  return 1;
+                    case 7:  return 1;
+                    case 8:  return 1;
+                    case 9:  return 2;
                     case 10: return 1;
                     case 11: return 1;
                     case 12: return 1;
@@ -161,12 +185,12 @@
                     case 23: return lerp(ops[0], ops[1], ops[2]);
                     case 24: return step(ops[0], ops[1]);
                     case 25: return smoothstep(ops[0], ops[1], ops[2]);
-                    case 26: return float4(ops[0].x, ops[1].x, 0, 0);
-                    case 27: return float4(ops[0].x, ops[1].x, ops[2].x, 0);
+                    case 26: return float4(ops[0].x, ops[1].x, getSentinel().xx);
+                    case 27: return float4(ops[0].x, ops[1].x, ops[2].x, getSentinel().x);
                     case 28: return float4(ops[0].x, ops[1].x, ops[2].x, ops[3].x);
                     case 29: return swizzle(ops[0], ops[1]);
-                    case 30: return float4(varyings.uv, 0, 0);
-                    case 31: return float4(2.0 * (varyings.uv - 0.5) * 10.0, 0, 0);
+                    case 30: return float4(varyings.uv, getSentinel().xx);
+                    case 31: return float4(2.0 * (varyings.uv - 0.5) * 10.0, getSentinel().xx);
                     case 32: return _Time;
                     case 33: return round(ops[0]);
                     default: return 0; 
@@ -208,12 +232,19 @@
                             float4 r = stack[stackPtr];
                             stackPtr--;
                             float4 l = stack[stackPtr];
+
+                            // if dimensions mismatch, treat the smaller as full width
+                            bool rSingle = getDimension(r) == 1;
+                            bool lSingle = getDimension(l) == 1;
+                            if      (rSingle && !lSingle) r = r.xxxx;
+                            else if (!rSingle && lSingle) l = l.xxxx;
+                            
                             [forcecase] switch(opi)
                             {
                                 case 1:  stack[stackPtr] = l + r;  break;
                                 case 2:  stack[stackPtr] = l - r;  break;
                                 case 3:  stack[stackPtr] = l * r;  break;
-                                case 4:  stack[stackPtr] = l / (r == 0 ? 1 : r);  break;
+                                case 4:  stack[stackPtr] = l / r;  break;
                                 case 5:  stack[stackPtr] = l < r;  break;
                                 case 6:  stack[stackPtr] = l > r;  break;
                                 case 7:  stack[stackPtr] = l == r; break;
@@ -237,17 +268,17 @@
                         case 5: // CALL <int>
                             float4x4 v = 0;
                             int arity = getFunArity(opi);
-                            int k = 0;
-                            for (; k < arity; k++)
+                            for (int k = 0; k < arity; k++)
                             {
                                 stackPtr--;
-                                v[k] = stack[stackPtr];
+                                v[k] = maskSentinel(stack[stackPtr], 0);
                             }
                             float4x4 rev = 0;
-                            for (int j = 0; j < k; j++)
+                            for (int j = 0; j < arity; j++)
                             {
-                                rev[j] = v[k-1-j];
+                                rev[j] = v[arity-1-j];
                             }
+                            // TODO: Restore sentinel values after function call
                             stack[stackPtr] = callFun(opi, rev);
                             stackPtr++;
                             break;
@@ -277,11 +308,12 @@
                 stackPtr--;
                 stackPtr = max(stackPtr, 0);
                 
-                IN.vertex.z = stack[stackPtr].a;
+                float4 result = maskSentinel(stack[stackPtr], 0);
+                IN.vertex.z = result.a;
                 
                 o.vertex = UnityObjectToClipPos(IN.vertex);
                 o.uv = IN.uv;
-                o.res = stack[stackPtr].rgb;
+                o.res = result.rgb;
                 
                 return o;
             }
