@@ -86,6 +86,7 @@
                 }
 
                 // Assign each field (manually to satisfy shador compiler chan)
+                val = maskSentinel(val, 0);
                 float4 res = curr;
                 for (int i = 0; i < 4; i++)
                 {

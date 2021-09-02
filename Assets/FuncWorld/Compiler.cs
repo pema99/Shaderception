@@ -159,7 +159,7 @@ public class Compiler : UdonSharpBehaviour
                 case "SETVAR":
                     program[i] = one * 6;
                     string[] parts = ((string)linked[i+1]).Split('.');
-                    program[i+1] = one * float.Parse((string)linked[i+1]);
+                    program[i+1] = one * float.Parse(parts[0]);
                     if (parts.Length > 1) // swizzle assignments
                     {
                         string swizzle = parts[1];
@@ -325,7 +325,7 @@ public class Compiler : UdonSharpBehaviour
                     {
                         if (b.Length > 1) // handle swizzle
                         {
-                            linked[j+1] = reg + b[1];
+                            linked[j+1] = reg + "." + b[1];
                         }
                         else
                         {
