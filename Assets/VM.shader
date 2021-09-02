@@ -31,7 +31,7 @@
 
             // Stack machine
             static v2f varyings;
-            static float4 stack[128];
+            static float4 stack[128]; // TODO LOWER
             static int stackPtr = 0;
             static float4 vtab[256];
 
@@ -213,7 +213,7 @@
                                 case 1:  stack[stackPtr] = l + r;  break;
                                 case 2:  stack[stackPtr] = l - r;  break;
                                 case 3:  stack[stackPtr] = l * r;  break;
-                                case 4:  stack[stackPtr] = l / r;  break;
+                                case 4:  stack[stackPtr] = l / (r == 0 ? 1 : r);  break;
                                 case 5:  stack[stackPtr] = l < r;  break;
                                 case 6:  stack[stackPtr] = l > r;  break;
                                 case 7:  stack[stackPtr] = l == r; break;

@@ -117,7 +117,7 @@ public class Parser : UdonSharpBehaviour
             case "/":  return 4;
             case "<":  return 5;
             case ">":  return 6;
-            case "=":  return 7;
+            case "==": return 7;
             case "<=": return 8;
             case ">=": return 9;
             case "!=": return 10;
@@ -211,8 +211,6 @@ public class Parser : UdonSharpBehaviour
     [RecursiveMethod]
     void Inline(int id)
     {
-        Debug.Log("Inlining " + id + " " + funcIdents[id]);
-
         for (int i = 0; i < parsed[id].Length; i += 2)
         {
             if (parsed[id][i] == null) break;
@@ -226,6 +224,14 @@ public class Parser : UdonSharpBehaviour
 
                     if (funcIdents[j].Equals(parsed[id][i+1]))
                     {
+                        // store previous renaming table
+                        string[] prevRenameFrom = null;
+                        if (renameFrom != null)
+                        {
+                            prevRenameFrom = new string[renameFrom.Length];
+                            System.Array.Copy(renameFrom, prevRenameFrom, renameFrom.Length);
+                        }
+
                         // setup renaming table
                         renameFrom = funcParams[j];
                         renameTo = new string[renameFrom.Length];
@@ -237,13 +243,16 @@ public class Parser : UdonSharpBehaviour
 
                         // recursively inline function
                         Inline(j);
+
+                        // restore renaming table
+                        renameFrom = prevRenameFrom;
                         break;
                     }
                 }
             }
             else
             {
-                // Rename variables
+                // Rename variables if a mapping table is available
                 if (parsed[id][i] == "PUSHVAR" || parsed[id][i] == "SETVAR")
                 {
                     string ident = (string)parsed[id][i+1];
@@ -253,7 +262,6 @@ public class Parser : UdonSharpBehaviour
                         {
                             if (ident == renameFrom[j])
                             {
-                                Debug.Log(renameFrom[j] + " + " + ident);
                                 parsed[id][i+1] = renameTo[j];
                                 break;
                             }
@@ -295,7 +303,8 @@ public class Parser : UdonSharpBehaviour
             }
         }
 
-        // Register allocation, unfortunately O(n^2)
+        // Register allocation
+        bool[] alloced = new bool[linked.Length];
         int regAlloc = 0;
         for (int i = 0; i < linked.Length; i += 2)
         {
@@ -303,6 +312,9 @@ public class Parser : UdonSharpBehaviour
 
             if (linked[i] == "PUSHVAR" || linked[i] == "SETVAR")
             {
+                if (alloced[i]) // don't allocate registers multiple times
+                    continue;
+
                 string reg = (regAlloc++).ToString();
                 string[] a = linked[i+1].ToString().Split('.');
 
@@ -322,6 +334,7 @@ public class Parser : UdonSharpBehaviour
                         {
                             linked[j+1] = reg;
                         }
+                        alloced[j] = true;
                     }
                 }
             }
@@ -597,7 +610,7 @@ public class Parser : UdonSharpBehaviour
         while (true)
         {
             if ((Match('<') && MatchNext('=')) || (Match('>') && MatchNext('=')) || (Match('!') && MatchNext('=')) ||
-                (Match('&') && MatchNext('&')) || (Match('|') && MatchNext('|')))
+                (Match('&') && MatchNext('&')) || (Match('|') && MatchNext('|')) || (Match('=') && MatchNext('=')))
             {
                 object tok1 = Eat();
                 object tok2 = Eat();
@@ -605,7 +618,7 @@ public class Parser : UdonSharpBehaviour
                 Emit("BINOP", tok1 + "" + tok2);
                 if (IsAtEnd()) return;
             }
-            else if (Match('<') || Match('>') || Match('='))
+            else if (Match('<') || Match('>'))
             {
                 object tok = Eat();
                 AddSub();
