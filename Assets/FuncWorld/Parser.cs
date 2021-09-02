@@ -11,14 +11,12 @@ public class Parser : UdonSharpBehaviour
     // - Error handling
     // - Get get pixel from last frames data
     // - Get audiolink value
-    // - Function calls (maybe)
     // - Explicit returns
 
     public InputField input;
     public Text output;
 
     public Material screenMat;
-    public Material heightMat;
 
     public override void Interact()
     {
@@ -54,7 +52,6 @@ public class Parser : UdonSharpBehaviour
 
         // Write to material
         WriteProgramToMaterial(screenMat);
-        WriteProgramToMaterial(heightMat);
         Vector4[] bin = screenMat.GetVectorArray("_Program");
         string res = "";
         for (int i = 0; i < bin.Length; i++)

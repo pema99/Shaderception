@@ -52,6 +52,11 @@
                 return isSentinel(val) ? to : val;
             }
 
+            float4 restoreSentinel(float4 val, float4 comp)
+            {
+                return isSentinel(comp) ? comp : val;
+            }
+
             uint getDimension(float4 val)
             {
                 return dot(1, isSentinel(val) ? 0 : 1);
@@ -113,6 +118,18 @@
                 {
                     vtab[opi % 256] = val;
                 }
+            }
+
+            float4 getFunSentinelMask(int opi, int arity, float4x4 ops)
+            {
+                // Note to future Pema:
+                //   This uber cursed function returns the mask used to set
+                //   sentinality of the value returned from a function based
+                //   on the inputs. For swizzles and vector constructors, we
+                //   don't want to set sentinality based on inputs, so this
+                //   skips those. Remember, the ops matrix is an reverse order.
+                if (opi >= 1 && opi <= 25) return ops[arity-1];
+                else return 0;
             }
 
             int getFunArity(int opi)
@@ -255,6 +272,7 @@
                                 case 12: stack[stackPtr] = l || r; break;
                                 default: break;
                             }
+
                             stackPtr++;
                             break;
 
@@ -266,20 +284,27 @@
                             break;
 
                         case 5: // CALL <int>
-                            float4x4 v = 0;
                             int arity = getFunArity(opi);
+                            float4x4 vals = 0;
                             for (int k = 0; k < arity; k++)
                             {
                                 stackPtr--;
-                                v[k] = maskSentinel(stack[stackPtr], 0);
+                                vals[k] = stack[stackPtr];
                             }
+                            float4x4 masked = float4x4(
+                                maskSentinel(vals[0], 0),
+                                maskSentinel(vals[1], 0),
+                                maskSentinel(vals[2], 0),
+                                maskSentinel(vals[3], 0)
+                            );
                             float4x4 rev = 0;
                             for (int j = 0; j < arity; j++)
                             {
-                                rev[j] = v[arity-1-j];
+                                rev[j] = masked[arity-1-j];
                             }
-                            // TODO: Restore sentinel values after function call
                             stack[stackPtr] = callFun(opi, rev);
+                            
+                            stack[stackPtr] = restoreSentinel(stack[stackPtr], getFunSentinelMask(opi, arity, vals));
                             stackPtr++;
                             break;
 
