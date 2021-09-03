@@ -29,11 +29,17 @@ public class Compiler : UdonSharpBehaviour
 
     public override void Interact()
     {
+        error = null;
+
         // Lex
         currentLexed = 0;
         lexed = new object[4000];
-        //Debug.Log(input.text);
         Lex(input.text);
+        if (HasError())
+        {
+            output.text = error;
+            return;
+        }
 
         // Parse / codegen
         currentLexed = 0;
@@ -46,12 +52,24 @@ public class Compiler : UdonSharpBehaviour
         parsed = new object[4000][];
         parsed[0] = new object[4000];
         Block();
+        if (HasError())
+        {
+            output.text = error;
+            return;
+        }
 
         // Linking
         regCount = 0;
         currentLinked = 0;
         linked = new object[4000];
+        currentLabels = 0;
+        labels = new object[4000];
         Link();
+        if (HasError())
+        {
+            output.text = error;
+            return;
+        }
         output.text = "";
         for (int i = 0; i < linked.Length; i += 2)
         {
@@ -61,14 +79,19 @@ public class Compiler : UdonSharpBehaviour
 
         // Write to material
         WriteProgramToMaterial(screenMat);
-        Vector4[] bin = screenMat.GetVectorArray("_Program");
-        string res = "";
-        for (int i = 0; i < bin.Length; i++)
-        {
-            if (i % 2 == 0 && bin[i] == Vector4.zero) break;
-            res += bin[i] + ", ";
-        }
-        //Debug.Log(res);
+    }
+
+    // Error handling
+    string error = null;
+
+    void Error(string text)
+    {
+        error = "Error: " + text;
+    }
+
+    bool HasError()
+    {
+        return error != null;
     }
 
     // Write to GPU data
@@ -220,6 +243,8 @@ public class Compiler : UdonSharpBehaviour
     string[] renameTo;
     int currentLinked;
     object[] linked;
+    int currentLabels = 0;
+    object[] labels;
 
     [RecursiveMethod]
     void Inline(int id)
@@ -281,8 +306,17 @@ public class Compiler : UdonSharpBehaviour
                         }
                     }
                 }
-                linked[currentLinked++] = parsed[id][i];
-                linked[currentLinked++] = parsed[id][i+1];
+                // Dont add labels
+                if (parsed[id][i] == "LABEL")
+                {
+                    labels[currentLabels++] = parsed[id][i+1];
+                    labels[currentLabels++] = currentLinked;
+                }
+                else
+                {
+                    linked[currentLinked++] = parsed[id][i];
+                    linked[currentLinked++] = parsed[id][i+1];
+                }
             }
         }
     }
@@ -303,14 +337,11 @@ public class Compiler : UdonSharpBehaviour
             if (linked[i] == "JUMP" || linked[i] == "CONDJUMP")
             {
                 string label = (string)linked[i+1];
-                for (int j = 0; j < linked.Length; j++)
+                for (int j = 0; j < labels.Length; j += 2)
                 {
-                    if (linked[j] == null) break;
-
-                    if (linked[j] == "LABEL" && linked[j+1] == label)
+                    if (labels[j] == label)
                     {
-                        linked[i+1] = (float)j;
-                        break;
+                        linked[i+1] = (float)labels[j+1];
                     }
                 }
             }
@@ -401,17 +432,77 @@ public class Compiler : UdonSharpBehaviour
 
     object Peek()
     {
-        return lexed[currentLexed];
+        if (currentLexed < lexed.Length)
+        {
+            return lexed[currentLexed];
+        }
+        else
+        {
+            return false;
+        }
     }
 
     object PeekNext()
     {
-        return lexed[currentLexed+1];
+        if (currentLexed + 1 < lexed.Length)
+        {
+            return lexed[currentLexed + 1];
+        }
+        else
+        {
+            return false;
+        }
     }
 
-    object Eat()
+    object Advance()
     {
-        return lexed[currentLexed++];
+        if (currentLexed < lexed.Length)
+        {
+            return lexed[currentLexed++];
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    object Eat(object tok)
+    {
+        if (Match(tok))
+        {
+            return Advance();
+        }
+        else
+        {
+            Error("Expected token '" + tok + "', found token: " + Peek());
+            return false;
+        }
+    }
+
+    string EatIdent()
+    {
+        if (Peek().GetType() == typeof(string))
+        {
+            return (string)Advance();
+        }
+        else
+        {
+            Error("Expected identifier, found token: " + Peek());
+            return "";
+        }
+    }
+
+    float EatFloat()
+    {
+        if (Peek().GetType() == typeof(float))
+        {
+            return (float)Advance();
+        }
+        else
+        {
+            Error("Expected float literal, found token: " + Peek());
+            return 0;
+        }
     }
 
     bool Match(object tok)
@@ -426,7 +517,7 @@ public class Compiler : UdonSharpBehaviour
 
     bool IsAtEnd()
     {
-        return (currentLexed >= lexed.Length - 1) || (Peek() == null);
+        return (currentLexed >= lexed.Length - 1) || (Peek() == null) || HasError();
     }
 
     [RecursiveMethod]
@@ -474,23 +565,23 @@ public class Compiler : UdonSharpBehaviour
     {
         string[] parameters = new string[16];
 
-        Eat(); // fun
-        string ident = (string)Eat();
-        Eat(); // (
+        Eat("fun");
+        string ident = EatIdent();
+        Eat('(');
 
         int arity = 0;
         if (Peek().GetType() == typeof(string)) // has parameters
         {
-            parameters[arity++] = (string)Eat();
+            parameters[arity++] = EatIdent();
             while (Match(','))
             {
-                Eat(); // ,
-                parameters[arity++] = (string)Eat();
+                Eat(',');
+                parameters[arity++] = EatIdent();
             }
         }
 
-        Eat(); // )
-        Eat(); // {
+        Eat(')');
+        Eat('{');
 
         // emit body into correct store
         SwitchToFunction(ident, parameters);
@@ -507,19 +598,19 @@ public class Compiler : UdonSharpBehaviour
         // restore global store
         SwitchToGlobal();
 
-        Eat(); // }
+        Eat('}');
     }
 
     [RecursiveMethod]
     void Conditional(string endLabel)
     {
-        Eat(); // if
-        Eat(); // (
+        Eat("if");
+        Eat('(');
 
         Expression(); // condition
 
-        Eat(); // )
-        Eat(); // {
+        Eat(')');
+        Eat('{');
         
         string falseLabel = "false_" + labelCount++;
         Emit("CONDJUMP", falseLabel);
@@ -529,11 +620,11 @@ public class Compiler : UdonSharpBehaviour
         Emit("JUMP", endLabel);
         Emit("LABEL", falseLabel);
 
-        Eat(); // }
+        Eat('}');
 
         if (Match("else"))
         {
-            Eat();
+            Eat("else");
             
             if (Match("if")) // else if
             {
@@ -541,9 +632,9 @@ public class Compiler : UdonSharpBehaviour
             }
             else // else
             {
-                Eat(); // {
+                Eat('{');
                 Block();
-                Eat(); // }
+                Eat('}');
 
                 Emit("LABEL", endLabel);
             }
@@ -560,52 +651,52 @@ public class Compiler : UdonSharpBehaviour
         string startLabel = "start_" + labelCount++;
         string endLabel = "end_" + labelCount++;
 
-        Eat(); // while
-        Eat(); // (
+        Eat("while");
+        Eat('(');
         
         Emit("LABEL", startLabel);
         Expression(); // condition
         Emit("CONDJUMP", endLabel);
 
-        Eat(); // )
-        Eat(); // {
+        Eat(')');
+        Eat('{');
 
         Block();
         Emit("JUMP", startLabel);
         
-        Eat(); // }
+        Eat('}');
 
         Emit("LABEL", endLabel);
     }
 
     void Assignment()
     {
-        Eat(); // set
-        string ident = (string)Eat();
+        EatIdent(); // set or let TODO
+        string ident = EatIdent();
         if (Match('.'))
         {
-            Eat();
-            string swizzle = (string)Eat();
+            Eat('.');
+            string swizzle = EatIdent();
             ident += "." + swizzle;
         }
-        Eat(); // =
+        Eat('=');
         Expression();
-        Eat(); // ;
+        Eat(';');
         Emit("SETVAR", ident);
     }
 
     [RecursiveMethod]
     void FuncCall()
     {
-        object ident = Eat(); // ident
-        Eat(); // lparen
+        string ident = EatIdent(); // ident
+        Eat('(');
         Expression();
         while (Match(','))
         {
-            Eat();
+            Eat(',');
             Expression();
         }
-        Eat(); // rparen
+        Eat(')');
         Emit("CALL", ident);
     }
 
@@ -625,15 +716,15 @@ public class Compiler : UdonSharpBehaviour
             if ((Match('<') && MatchNext('=')) || (Match('>') && MatchNext('=')) || (Match('!') && MatchNext('=')) ||
                 (Match('&') && MatchNext('&')) || (Match('|') && MatchNext('|')) || (Match('=') && MatchNext('=')))
             {
-                object tok1 = Eat();
-                object tok2 = Eat();
+                object tok1 = Advance();
+                object tok2 = Advance();
                 AddSub();
                 Emit("BINOP", tok1 + "" + tok2);
                 if (IsAtEnd()) return;
             }
             else if (Match('<') || Match('>'))
             {
-                object tok = Eat();
+                object tok = Advance();
                 AddSub();
                 Emit("BINOP", tok.ToString());
                 if (IsAtEnd()) return;
@@ -652,7 +743,7 @@ public class Compiler : UdonSharpBehaviour
 
         while (Match('+') || Match('-'))
         {
-            object tok = Eat();
+            object tok = Advance();
             MulDiv();
             Emit("BINOP", tok.ToString());
             if (IsAtEnd()) return;
@@ -666,7 +757,7 @@ public class Compiler : UdonSharpBehaviour
 
         while (Match('*') || Match('/'))
         {
-            object tok = Eat();
+            object tok = Advance();
             Term();
             Emit("BINOP", tok.ToString());
             if (IsAtEnd()) return;
@@ -688,24 +779,24 @@ public class Compiler : UdonSharpBehaviour
             }
             else // var access
             {
-                Emit("PUSHVAR", Eat());
+                Emit("PUSHVAR", EatIdent());
             }
         }
         else if (type == typeof(float)) // literal
         {
-            Emit("PUSHCONST", new Vector4((float)Eat(), float.NaN, float.NaN, float.NaN));
+            Emit("PUSHCONST", new Vector4(EatFloat(), float.NaN, float.NaN, float.NaN));
         }
         else if (type == typeof(char))
         {
             if (Match('(')) // grouped
             {
-                Eat();
+                Eat('(');
                 Expression();
-                Eat();
+                Eat(')');
             }
             else if (Match('+') || Match('-')) // unary op
             {
-                var op = Eat();
+                var op = Advance();
                 Term();
                 Emit("UNOP", op.ToString());
             }
@@ -714,9 +805,9 @@ public class Compiler : UdonSharpBehaviour
         // Swizzling
         if (Match('.'))
         {
-            Eat();
+            Eat('.');
 
-            string swizzle = (string)Eat();
+            string swizzle = EatIdent();
             Vector4 res = Vector4.zero;
             for (int i = 0; i < 4; i++)
             {
@@ -784,6 +875,8 @@ public class Compiler : UdonSharpBehaviour
                 float res;
                 if (float.TryParse(ident, out res))
                     lexed[currentLexed++] = res;
+                else
+                    Error("Failed to parse float literal: " + ident);
             }
 
             // whitespace

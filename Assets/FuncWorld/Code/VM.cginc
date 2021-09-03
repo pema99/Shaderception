@@ -384,7 +384,7 @@ float4 runVM(float2 uv)
                 break;
 
             case 7: // JUMP <location>
-                i = opi;
+                i = opi - 2;
                 jumpCount++;
                 break;
 
@@ -392,7 +392,7 @@ float4 runVM(float2 uv)
                 float4 cond = popStack();
                 if (cond.x == 0)
                 {
-                    i = opi;
+                    i = opi - 2;
                     jumpCount++;
                 }
                 break;
