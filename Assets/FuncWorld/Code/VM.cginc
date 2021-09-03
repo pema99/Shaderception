@@ -5,10 +5,14 @@
 float4 _Program[1000];
 
 // Stack machine
-static float2 globaluv;
 static float4 stack[128];
 static uint stackPtr = 0;
 static float4 vtab[256];
+
+// Other globals
+static float2 globaluv;
+static uint jumpCount = 0;
+static const float MAX_JUMPS = 2000;
 
 // Sentinel handling
 uint4 _Sentinel;
@@ -280,6 +284,9 @@ float4 runVM(float2 uv)
 
     for (uint i = 0; i < 1000; i += 2)
     {
+        if (jumpCount > MAX_JUMPS)
+            break;
+
         uint instr = round(_Program[i].x);
         float4 opf = _Program[i + 1];
         uint opi = round(opf).x;
@@ -378,12 +385,16 @@ float4 runVM(float2 uv)
 
             case 7: // JUMP <location>
                 i = opi;
+                jumpCount++;
                 break;
 
             case 8: // CONDJUMP <location>
                 float4 cond = popStack();
                 if (cond.x == 0)
+                {
                     i = opi;
+                    jumpCount++;
+                }
                 break;
 
             case 9: // LABEL <nop>
