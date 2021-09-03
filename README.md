@@ -3,7 +3,8 @@ A compiler that compiles shaders written in a small shading language to a stack 
 
 # ISA
 ```
-Every instruction consists of 2 float4s, opcode and operand (wasteful I know, bite me). The opcode goes in the X channel of the first float4.
+Every instruction consists of 2 float4s, opcode and operand (wasteful I know, bite me).
+The opcode goes in the X channel of the first float4.
 
 Instructions (opcode - mnemonic <operand> - description):
 1 - PUSHCONST <float4> - Push a constant to the stack
