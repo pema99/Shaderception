@@ -1,5 +1,5 @@
 # Shaderception
-A compiler that compiles shaders written in a small shading language to a stack based instruction set, which runs in a VM written in a shader. Shaderception.
+A compiler written in UdonSharp that compiles shaders written in a small shading language to a stack based instruction set, which runs in a VM written in a shader. Shaderception. For use in VRChat: https://vrchat.com/home/launch?worldId=wrld_4d1a8927-452c-486d-af11-949a9aac58c3
 
 # ISA
 ```
