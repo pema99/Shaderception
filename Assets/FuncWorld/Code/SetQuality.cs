@@ -6,11 +6,14 @@ using VRC.Udon;
 
 public class SetQuality : UdonSharpBehaviour
 {
-    public Mesh mesh;
-    public MeshFilter renderer;
+    public CustomRenderTexture buffer;
+    public MeshRenderer screen;
 
     public override void Interact()
     {
-        renderer.mesh = mesh;
+        CustomRenderTexture rt = (CustomRenderTexture)screen.material.GetTexture("_MainTex");
+        rt.updateMode = CustomRenderTextureUpdateMode.OnDemand;
+        buffer.updateMode = CustomRenderTextureUpdateMode.Realtime;
+        screen.material.SetTexture("_MainTex", buffer);
     }
 }
