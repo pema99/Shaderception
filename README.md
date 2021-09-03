@@ -24,6 +24,10 @@ which means var.xyyz = <value>.
 
 Every function is inlined immediately. There is no callstack.
 
+The only supported types are float, float2, float3 and float4. The type of a value is encoded
+directly in the value. Every value is a full width float4, but elements that are not used will
+have the value NaN. Thus, a 2D float vector may look like float4(1, 3, NaN, NaN).
+
 Binary operator IDs from 1 to 12: +, -, *, /, <, >, ==, <=, >=, !=, &&, ||
 Unary operator only has negation which is ID 45.
 
