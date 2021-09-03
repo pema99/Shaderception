@@ -8,10 +8,16 @@ Every instruction consists of 2 float4s, opcode and operand (wasteful I know, bi
 Instructions (opcode - mnemonic <operand> - description):
 1 - PUSHCONST <float4> - Push a constant to the stack
 2 - PUSHVAR <id> - Push a variable stored at location <id> to the stack
-3 - BINOP <op> - Take the 2 topmost elements of the stack, perform binary operation. Put the result back on the stack.
-4 - UNOP <op> - Take the topmost stack element and perform unary operation on it, put result on stack.
-5 - CALL <id> - Call builtin function with the given ID. Parameters should be on the stack when the instruction is invoked. Result is put on the stack.
-6 - SETVAR <id> - Pop a value off the stack and set the variable at location <id> to the value. This operator also stores a mask of which elements of the vector to set in the y element of the opcode. An example of such a mask could be the float "1223.0" which means var.xyyz = <value>.
+3 - BINOP <op> - Take the 2 topmost elements of the stack, perform binary operation.
+Put the result back on the stack.
+4 - UNOP <op> - Take the topmost stack element and perform unary operation on it,
+put result on stack.
+5 - CALL <id> - Call builtin function with the given ID. Parameters should be on the
+stack when the instruction is invoked. Result is put on the stack.
+6 - SETVAR <id> - Pop a value off the stack and set the variable at location <id> to
+the value. This operator also stores a mask of which elements of the vector to set in
+the y element of the opcode. An example of such a mask could be the float "1223.0"
+which means var.xyyz = <value>.
 7 - JUMP <loc> - Jump to memory location.
 8 - CONDJUMP <loc> - Pop value off the stack. If it is false (equals 0), jump to location.
 
