@@ -1,7 +1,59 @@
 # Shaderception
 A compiler written in UdonSharp that compiles shaders written in a small shading language to a stack based instruction set, which runs in a VM written in a shader. Shaderception. For use in VRChat: https://vrchat.com/home/launch?worldId=wrld_4d1a8927-452c-486d-af11-949a9aac58c3
 
-# ISA
+# Example program
+Here is a small raymarcher that is capable at running at interactive speeds in the VM.
+
+```glsl
+fun smin(d1, d2, k)
+{
+    let h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    lerp(d2, d1, h) - k * h * (1.0 - h)
+}
+
+fun map(p)
+{
+    let d1 = length(p) - 0.3;
+    let d2 = length(p + float3(0.2, sin(time().y)*0.3, 0)) - 0.3;
+    smin(d1, d2, 0.05)
+}
+
+fun march(ro, rd)
+{
+    let t = 0;
+    let i = 0;
+    while (i < 15)
+    {
+        let dist = map(ro + t * rd);
+        let t = t + dist;
+        let i = i + 1;
+    }
+    t
+}
+
+let p = 2.0 * (uv() - 0.5);
+let ro = float3(0.0, 0.0, -1.0);
+let rd = normalize(float3(p.x, p.y, 1));
+
+let d = march(ro, rd);
+if (d < 1)
+{
+    let hit = ro + d * rd;
+    let a = map(hit+float3(0.01, 0, 0)) - map(hit-float3(0.01, 0, 0));
+    let b = map(hit+float3(0, 0.01, 0)) - map(hit-float3(0, 0.01, 0));
+    let c = map(hit+float3(0, 0, 0.01)) - map(hit-float3(0, 0, 0.01));
+    normalize(float3(a, b, c)) * 0.5 + 0.5
+}
+else
+{
+    0
+}
+```
+
+
+
+# VM Instruction Set Architecture 
+
 ```
 Every instruction consists of 2 float4s, opcode and operand (wasteful I know, bite me).
 The opcode goes in the X channel of the first float4.
