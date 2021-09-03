@@ -9,7 +9,6 @@ public class Compiler : UdonSharpBehaviour
 {
     // TODO:
     // Problems:
-    //     Prevent infinite loops by counting jumps
     //     Error handling!
     // Add:
     //     Audiolink
