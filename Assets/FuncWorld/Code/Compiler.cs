@@ -8,10 +8,20 @@ using UnityEngine.UI;
 public class Compiler : UdonSharpBehaviour
 {
     // TODO:
-    // - Error handling
-    // - Get get pixel from last frames data
-    // - Get audiolink value
-    // - Explicit returns
+    // Problems:
+    //     Prevent infinite loops by counting jumps
+    //     Error handling!
+    // Add:
+    //     Audiolink
+    //     Last frames data
+    //     Input from user
+    //     Arbitrary writes with geom
+    //     Indirect jump
+    // Maybe:
+    //     Remove sets?
+    //     Explicit return?
+    //     Non-inlined functions. Actual callstack?
+    //     C-style defines
 
     public InputField input;
     public Text output;
