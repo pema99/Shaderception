@@ -23,7 +23,7 @@ public class Compiler : UdonSharpBehaviour
         // Lex
         currentLexed = 0;
         lexed = new object[4000];
-        Debug.Log(input.text);
+        //Debug.Log(input.text);
         Lex(input.text);
 
         // Parse / codegen
@@ -59,7 +59,7 @@ public class Compiler : UdonSharpBehaviour
             if (i % 2 == 0 && bin[i] == Vector4.zero) break;
             res += bin[i] + ", ";
         }
-        Debug.Log(res);
+        //Debug.Log(res);
     }
 
     // Write to GPU data
