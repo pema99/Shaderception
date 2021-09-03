@@ -86,7 +86,10 @@ public class Compiler : UdonSharpBehaviour
 
     void Error(string text)
     {
-        error = "Error: " + text;
+        if (error == null)
+        {
+            error = "Error: " + text;
+        }
     }
 
     bool HasError()
@@ -468,40 +471,55 @@ public class Compiler : UdonSharpBehaviour
 
     object Eat(object tok)
     {
-        if (Match(tok))
+        if (Peek() == null)
         {
-            return Advance();
+            Error("Expected token '" + tok + "', but reached end of program.");
+            return false;
         }
-        else
+        else if (!Match(tok))
         {
             Error("Expected token '" + tok + "', found token: " + Peek());
             return false;
+        }
+        else
+        {
+            return Advance();
         }
     }
 
     string EatIdent()
     {
-        if (Peek().GetType() == typeof(string))
+        if (Peek() == null)
         {
-            return (string)Advance();
+            Error("Expected identifier, but reached end of program.");
+            return "";
         }
-        else
+        else if (Peek().GetType() != typeof(string))
         {
             Error("Expected identifier, found token: " + Peek());
             return "";
+        }
+        else
+        {
+            return (string)Advance();
         }
     }
 
     float EatFloat()
     {
-        if (Peek().GetType() == typeof(float))
+        if (Peek() == null)
         {
-            return (float)Advance();
+            Error("Expected float literal, but reached end of program.");
+            return 0;
         }
-        else
+        else if (Peek().GetType() != typeof(float))
         {
             Error("Expected float literal, found token: " + Peek());
             return 0;
+        }
+        else
+        {
+            return (float)Advance();
         }
     }
 
@@ -527,6 +545,8 @@ public class Compiler : UdonSharpBehaviour
 
         // final expression is evaluated
         Expression();
+
+        if (!IsAtEnd() && !Match('}')) Error("End of block reached, but there is more code.");
     }
 
     // Returns: Is final statement?
