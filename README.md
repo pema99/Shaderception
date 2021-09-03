@@ -22,6 +22,8 @@ which means var.xyyz = <value>.
 7 - JUMP <loc> - Jump to memory location.
 8 - CONDJUMP <loc> - Pop value off the stack. If it is false (equals 0), jump to location.
 
+Every function is inlined immediately. There is no callstack.
+
 Binary operator IDs from 1 to 12: +, -, *, /, <, >, ==, <=, >=, !=, &&, ||
 Unary operator only has negation which is ID 45.
 
