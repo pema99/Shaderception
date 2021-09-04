@@ -27,7 +27,7 @@ public class Compiler : UdonSharpBehaviour
 
     public Material screenMat;
 
-    public override void Interact()
+    public void Compile()
     {
         error = null;
 
