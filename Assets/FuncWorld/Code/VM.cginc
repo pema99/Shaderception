@@ -293,7 +293,7 @@ float4 callFun(uint opi, float4x4 ops)
         case 42: return float4(_CustomRenderTextureWidth, _CustomRenderTextureHeight, getSentinel().xx);
         case 43: return _InputButton;
         case 44: return _InputAxis;
-        case 45: return tex2Dlod(_Camera, float4(ops[0].xy, 0, 0));
+        case 45: return float4(tex2Dlod(_Camera, float4(ops[0].xy, 0, 0)).xyz, getSentinel().x);
         default: return 0; 
     }
 }
