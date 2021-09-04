@@ -27,6 +27,11 @@ public class Compiler : UdonSharpBehaviour
 
     public Material screenMat;
 
+    void Start()
+    {
+        Compile();
+    }
+
     public void Compile()
     {
         error = null;
