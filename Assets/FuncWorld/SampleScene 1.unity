@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.07924773, g: 0.07262555, b: 0.060329873, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1273,25 +1273,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 789966375}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &804329973 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1094421957795851142, guid: 8894fa7e4588a5c4fab98453e558847d,
-    type: 3}
-  m_PrefabInstance: {fileID: 450775146}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &804329978
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 804329973}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contentType: 1
 --- !u!1 &839118198
 GameObject:
   m_ObjectHideFlags: 0
@@ -2257,7 +2238,8 @@ MonoBehaviour:
     - Fractional part\r\nmod(x, y) - Modulo x with y\r\nmin(x, y) - Min of x and
     y\r\nmax(x, y) - Max of x and y\r\nclamp(x, y, z) - Clamp x to [y; z]\r\nlerp(x,
     y, z) - Lerp [x; y] with z\r\nstep(x, y) - Step\r\nsmoothstep(x, y, z) - Smoothstep\r\nswizzle(val,
-    mask) - Internal use\r\n\r\n==== CONTROL FLOW ==\r==\nSet a variable:\r\nset
+    mask) - Internal use\r\nself(uv) - Get last frames data at given UV\nresolution()
+    - Get width and height of frame\n\r\n==== CONTROL FLOW ==\r==\nSet a variable:\r\nset
     a = 5.0;\r\n\r\nIf-statements use C-syntax:\r\nif (x > 0.5) { ... }\r\nelse if
     (y > 0.5) { ... }\r\nelse { ... }\r\n\r\nSame with while-statements:\r\nwhile
     (i < 10) { set i = i + 1; }\r\n\r\nFunctions are defined as so:\r\nfun add(a,

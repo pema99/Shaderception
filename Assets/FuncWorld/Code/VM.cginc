@@ -225,6 +225,8 @@ uint2 getFunInfo(uint opi)
         case 38: return uint2(1, 0);
         case 39: return uint2(2, 1);
         case 40: return uint2(3, 1);
+        case 41: return uint2(1, 0);
+        case 42: return uint2(0, 0);
         default: return uint2(0, 0); 
     }
 }
@@ -273,6 +275,8 @@ float4 callFun(uint opi, float4x4 ops)
         case 38: return float4(length(ops[0]), getSentinel().xxx);
         case 39: return reflect(ops[0], ops[1]);
         case 40: return refract(ops[0], ops[1], ops[2].x);
+        case 41: return tex2Dlod(_SelfTexture2D, float4(ops[0].xy, 0, 0));
+        case 42: return float4(_CustomRenderTextureWidth, _CustomRenderTextureHeight, getSentinel().xx);
         default: return 0; 
     }
 }

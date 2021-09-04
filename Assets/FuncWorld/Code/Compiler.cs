@@ -141,7 +141,9 @@ public class Compiler : UdonSharpBehaviour
             case "normalize":  return 37;
             case "length":     return 38;
             case "reflect":    return 39;
-            case "refract":    return 40;    
+            case "refract":    return 40;
+            case "self":       return 41;
+            case "resolution": return 42;    
             default:           return 0;
         }
     }
