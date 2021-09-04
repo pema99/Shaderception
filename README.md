@@ -126,4 +126,9 @@ case "normalize":  return 37;
 case "length":     return 38;
 case "reflect":    return 39;
 case "refract":    return 40;
+case "self":       return 41;
+case "resolution": return 42;
+case "button":     return 43;
+case "axis":       return 44;
+case "camera":     return 45;    
 ```
