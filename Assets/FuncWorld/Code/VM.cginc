@@ -1,8 +1,19 @@
-﻿// The one and only
-#define glsl_mod(x,y) (((x)-(y)*floor((x)/(y)))) 
+﻿// Shader roperties
+float4 _InputButton;
+float4 _InputAxis;
+sampler2D _Camera;
 
 // Program binary
-float4 _Program[1000];
+cbuffer ProgramBuffer {
+    float4 _Program[1023*4] : packoffset(c0);  
+    float4 _Program0[1023] : packoffset(c0);
+    float4 _Program1[1023] : packoffset(c1023);
+    float4 _Program2[1023] : packoffset(c2046);
+    float4 _Program3[1023] : packoffset(c3069);
+};
+
+// The one and only
+#define glsl_mod(x,y) (((x)-(y)*floor((x)/(y)))) 
 
 // Stack machine
 static float4 stack[128];
@@ -227,6 +238,9 @@ uint2 getFunInfo(uint opi)
         case 40: return uint2(3, 1);
         case 41: return uint2(1, 0);
         case 42: return uint2(0, 0);
+        case 43: return uint2(0, 0);
+        case 44: return uint2(0, 0);
+        case 45: return uint2(1, 0);
         default: return uint2(0, 0); 
     }
 }
@@ -277,6 +291,9 @@ float4 callFun(uint opi, float4x4 ops)
         case 40: return refract(ops[0], ops[1], ops[2].x);
         case 41: return tex2Dlod(_SelfTexture2D, float4(ops[0].xy, 0, 0));
         case 42: return float4(_CustomRenderTextureWidth, _CustomRenderTextureHeight, getSentinel().xx);
+        case 43: return _InputButton;
+        case 44: return _InputAxis;
+        case 45: return tex2Dlod(_Camera, float4(ops[0].xy, 0, 0));
         default: return 0; 
     }
 }
@@ -286,7 +303,10 @@ float4 runVM(float2 uv)
     globaluv = uv;
     stackPtr = 0;
 
-    for (uint i = 0; i < 1000; i += 2)
+    // Hack to prevent unity from deleting aliased cbuffer
+    if (uv.x < 0) globaluv = _Program0[0] + _Program1[0] + _Program2[0] + _Program3[0]; 
+
+    for (uint i = 0; i < 4092; i += 2)
     {
         if (jumpCount > MAX_JUMPS)
             break;

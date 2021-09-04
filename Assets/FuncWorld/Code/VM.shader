@@ -1,5 +1,9 @@
 ﻿Shader "Shaderception/VM"
 {
+    Properties
+    {
+        _Camera ("Camera", 2D) = "white"{}
+    }
     SubShader
     {
         Lighting Off

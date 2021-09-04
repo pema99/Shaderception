@@ -3,6 +3,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common;
 using UnityEngine.UI;
 
 public class Compiler : UdonSharpBehaviour
@@ -12,8 +13,6 @@ public class Compiler : UdonSharpBehaviour
     //     Error handling!
     // Add:
     //     Audiolink
-    //     Last frames data
-    //     Input from user
     //     Arbitrary writes with geom
     //     Indirect jump
     // Maybe:
@@ -24,21 +23,70 @@ public class Compiler : UdonSharpBehaviour
 
     public InputField input;
     public Text output;
-
     public Material screenMat;
 
+    // Runtime
     void Start()
     {
         Compile();
     }
 
+    Vector4 inputButton;
+    Vector4 inputAxis;
+    public override void InputUse(bool isPressed, UdonInputEventArgs args)
+    {
+        inputButton.x = (isPressed ? 1 : 0);
+    }
+
+    public override void InputJump(bool isPressed, UdonInputEventArgs args)
+    {
+        inputButton.y = (isPressed ? 1 : 0);
+    }
+
+    public override void InputGrab(bool isPressed, UdonInputEventArgs args)
+    {
+        inputButton.z = (isPressed ? 1 : 0);
+    }
+
+    public override void InputDrop(bool isPressed, UdonInputEventArgs args)
+    {
+        inputButton.w = (isPressed ? 1 : 0);
+    }
+
+    public override void InputMoveHorizontal(float val, UdonInputEventArgs args)
+    {
+        inputAxis.x = val;
+    }
+
+    public override void InputMoveVertical(float val, UdonInputEventArgs args)
+    {
+        inputAxis.y = val;
+    }
+
+    public override void InputLookVertical(float val, UdonInputEventArgs args)
+    {
+        inputAxis.z = val;
+    }
+
+    public override void InputLookHorizontal(float val, UdonInputEventArgs args)
+    {
+        inputAxis.w = val;
+    }
+
+    void Update()
+    {
+        screenMat.SetVector("_InputButton", inputButton);
+        screenMat.SetVector("_InputAxis", inputAxis);
+    }
+
+    // Compiler
     public void Compile()
     {
         error = null;
 
         // Lex
         currentLexed = 0;
-        lexed = new object[4000];
+        lexed = new object[4092];
         Lex(input.text);
         if (HasError())
         {
@@ -50,12 +98,12 @@ public class Compiler : UdonSharpBehaviour
         currentLexed = 0;
         labelCount = 0;
         currentFunc = 0;
-        funcIdents = new string[4000];
-        funcParams = new string[4000][];
+        funcIdents = new string[4092];
+        funcParams = new string[4092][];
         funcIdents[0] = "global";
         currentParsed = 0;
-        parsed = new object[4000][];
-        parsed[0] = new object[4000];
+        parsed = new object[4092][];
+        parsed[0] = new object[4092];
         Block();
         if (HasError())
         {
@@ -66,9 +114,9 @@ public class Compiler : UdonSharpBehaviour
         // Linking
         regCount = 0;
         currentLinked = 0;
-        linked = new object[4000];
+        linked = new object[4092];
         currentLabels = 0;
-        labels = new object[4000];
+        labels = new object[4092];
         Link();
         if (HasError())
         {
@@ -148,7 +196,10 @@ public class Compiler : UdonSharpBehaviour
             case "reflect":    return 39;
             case "refract":    return 40;
             case "self":       return 41;
-            case "resolution": return 42;    
+            case "resolution": return 42;
+            case "button":     return 43;
+            case "axis":       return 44;
+            case "camera":     return 45;    
             default:           return 0;
         }
     }
@@ -177,7 +228,7 @@ public class Compiler : UdonSharpBehaviour
     {
         Vector4 one = new Vector4(1, float.NaN, float.NaN, float.NaN);
 
-        Vector4[] program = new Vector4[4000];
+        Vector4[] program = new Vector4[4092];
 
         for (int i = 0; i < linked.Length; i += 2)
         {
@@ -244,7 +295,25 @@ public class Compiler : UdonSharpBehaviour
             }
         }
 
-        mat.SetVectorArray("_Program", program);
+        // split binary to put into aliased cbuffer
+        Vector4[][] split = new Vector4[4][]
+        {
+            new Vector4[1023],
+            new Vector4[1023],
+            new Vector4[1023],
+            new Vector4[1023]
+        };
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 1023; j++)
+            {
+                split[i][j] = program[i * 1023 + j];
+            }
+        }
+        mat.SetVectorArray("_Program0", split[0]);
+        mat.SetVectorArray("_Program1", split[1]);
+        mat.SetVectorArray("_Program2", split[2]);
+        mat.SetVectorArray("_Program3", split[3]);
     }
 
     // Linking
@@ -412,7 +481,7 @@ public class Compiler : UdonSharpBehaviour
             {
                 funcIdents[i] = ident;
                 funcParams[i] = parameters;
-                parsed[i] = new object[4000];
+                parsed[i] = new object[4092];
             }
 
             if (funcIdents[i] == ident)
