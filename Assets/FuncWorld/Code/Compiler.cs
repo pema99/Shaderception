@@ -730,7 +730,29 @@ public class Compiler : UdonSharpBehaviour
     [RecursiveMethod]
     void Expression()
     {
+        BoolOp();
+    }
+
+    [RecursiveMethod]
+    void BoolOp()
+    {
         Comparison();
+
+        while (true)
+        {
+            if ((Match('&') && MatchNext('&')) || (Match('|') && MatchNext('|')))
+            {
+                object tok1 = Advance();
+                object tok2 = Advance();
+                Comparison();
+                Emit("BINOP", tok1 + "" + tok2);
+                if (IsAtEnd()) return;
+            }
+            else
+            {
+                return;
+            }
+        }
     }
 
     [RecursiveMethod]
@@ -740,8 +762,8 @@ public class Compiler : UdonSharpBehaviour
 
         while (true)
         {
-            if ((Match('<') && MatchNext('=')) || (Match('>') && MatchNext('=')) || (Match('!') && MatchNext('=')) ||
-                (Match('&') && MatchNext('&')) || (Match('|') && MatchNext('|')) || (Match('=') && MatchNext('=')))
+            if ((Match('<') && MatchNext('=')) || (Match('>') && MatchNext('=')) ||
+                (Match('!') && MatchNext('=')) || (Match('=') && MatchNext('=')))
             {
                 object tok1 = Advance();
                 object tok2 = Advance();
@@ -860,7 +882,7 @@ public class Compiler : UdonSharpBehaviour
 
     bool IsAlpha(char c)
     {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
     }
 
     bool IsNumeric(char c)
