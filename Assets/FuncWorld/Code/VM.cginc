@@ -157,7 +157,7 @@ void pushStack(float4 val)
 float4 popStack()
 {
     stackPtr--;
-    return stack[stackPtr];
+    return stack[stackPtr % 128];
 }
 
 // Builtin functions
@@ -398,7 +398,6 @@ float4 runVM(float2 uv)
 
                 float4 retVal = callFun(opi, rev);
                 retVal = restoreSentinel(retVal, getFunSentinelMask(opi, arity, vals));
-                if (opi == 34) retVal = callFun(opi, rev);
                 pushStack(retVal);
                 break;
 

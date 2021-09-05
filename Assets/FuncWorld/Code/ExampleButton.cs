@@ -7,11 +7,12 @@ using UnityEngine.UI;
 
 public class ExampleButton : UdonSharpBehaviour
 {
-    public string ExampleProgram;
     public InputField input;
+    public Compiler compiler;
 
-    public override void Interact()
+    public void LoadExample()
     {
-        input.text = ExampleProgram.Replace("\\n", "\n");
+        input.text = gameObject.name.Replace("\\n", "\n");
+        compiler.Compile();
     }
 }
