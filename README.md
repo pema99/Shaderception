@@ -1,6 +1,8 @@
 # Shaderception
 A compiler written in UdonSharp that compiles shaders written in a small shading language to a stack based instruction set, which runs in a VM written in a shader. Shaderception. For use in VRChat: https://vrchat.com/home/launch?worldId=wrld_4d1a8927-452c-486d-af11-949a9aac58c3
 
+My friend Fuopy wrote an awesome playable pong game using this that you can try out, and plans to collect some cool programs in a separate repo. Check it out here: https://github.com/fuopy/shaderception-apps
+
 # Example program
 Here is a small raymarcher that is capable at running at interactive speeds in the VM.
 
@@ -124,4 +126,9 @@ case "normalize":  return 37;
 case "length":     return 38;
 case "reflect":    return 39;
 case "refract":    return 40;
+case "self":       return 41;
+case "resolution": return 42;
+case "button":     return 43;
+case "axis":       return 44;
+case "camera":     return 45;    
 ```
