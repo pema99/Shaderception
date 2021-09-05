@@ -537,6 +537,18 @@ public class Compiler : UdonSharpBehaviour
         }
     }
 
+    object PeekTo(int i)
+    {
+        if (currentLexed + i < lexed.Length)
+        {
+            return lexed[currentLexed + i];
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     object Advance()
     {
         if (currentLexed < lexed.Length)
@@ -613,6 +625,11 @@ public class Compiler : UdonSharpBehaviour
         return tok.Equals(PeekNext());
     }
 
+    bool MatchTo(int i, object tok)
+    {
+        return tok.Equals(PeekTo(i));
+    }
+
     bool IsAtEnd()
     {
         return (currentLexed >= lexed.Length - 1) || (Peek() == null) || HasError();
@@ -651,6 +668,11 @@ public class Compiler : UdonSharpBehaviour
                     FuncDef();
                     return false;
                 default:
+                    if (IsAssignment())
+                    {
+                        Assignment();
+                        return false;
+                    }
                     return true;
             }
         }
@@ -769,20 +791,80 @@ public class Compiler : UdonSharpBehaviour
         Emit("LABEL", endLabel);
     }
 
+    bool IsAssignment()
+    {
+        if (Match("let") || Match("set")) return true; // normal assignments
+        if (Peek().GetType() == typeof(string))
+        {
+            // Handle swizzle
+            int offset = 1;
+            if (MatchTo(1, '.') && PeekTo(2).GetType() == typeof(string))
+            {
+                offset += 2;
+            }
+
+            // Assignment types
+            if (MatchTo(offset, '=') && !MatchTo(offset+1, '=')) return true;
+            if (MatchTo(offset, '+') &&  MatchTo(offset+1, '=')) return true;
+            if (MatchTo(offset, '-') &&  MatchTo(offset+1, '=')) return true;
+            if (MatchTo(offset, '*') &&  MatchTo(offset+1, '=')) return true;
+            if (MatchTo(offset, '/') &&  MatchTo(offset+1, '=')) return true;
+            if (MatchTo(offset, '+') &&  MatchTo(offset+1, '+')) return true;
+            if (MatchTo(offset, '-') &&  MatchTo(offset+1, '-')) return true;
+        }
+        return false;
+    }
+
     void Assignment()
     {
-        EatIdent(); // set or let TODO
+        if (Match("let") || Match("set"))
+        {
+            Advance();
+        }
+
         string ident = EatIdent();
-        if (Match('.'))
+        string identFirst = ident;
+        if (Match('.')) // handle swizzle
         {
             Eat('.');
             string swizzle = EatIdent();
             ident += "." + swizzle;
         }
-        Eat('=');
-        Expression();
-        Eat(';');
-        Emit("SETVAR", ident);
+        if (Match('=')) // normal assignment
+        {
+            Eat('=');
+            Expression();
+            Eat(';');
+            Emit("SETVAR", ident);
+        }
+        else if (MatchNext('=') && (Match('+') || Match('-') || Match('*') || Match('/'))) // math assignment
+        {
+            Emit("PUSHVAR", identFirst);
+
+            string op = Advance().ToString();
+            Eat('=');
+            Expression();
+            Eat(';');
+
+            Emit("BINOP", op);
+            Emit("SETVAR", ident);
+        }
+        else if ((Match('+') && MatchNext('+')) || (Match('-') && MatchNext('-'))) // ++, --
+        {
+            Emit("PUSHVAR", identFirst);
+
+            string op = Advance().ToString();
+            Advance();
+            Eat(';');
+
+            Emit("PUSHCONST", new Vector4(1f, float.NaN, float.NaN, float.NaN));
+            Emit("BINOP", op);
+            Emit("SETVAR", ident);
+        }
+        else
+        {
+            Error("Unknown type of assignment.");
+        }
     }
 
     [RecursiveMethod]
@@ -896,7 +978,6 @@ public class Compiler : UdonSharpBehaviour
         {
             if ('('.Equals(PeekNext())) // function call
             {
-                // TODO: Codegen for constant vector constructors
                 FuncCall();
             }
             else // var access
