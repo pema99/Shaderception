@@ -11,8 +11,12 @@ public class Compiler : UdonSharpBehaviour
     // TODO:
     // Problems:
     //     Error handling!
+    //     Lerp with scalar no work
     // Add:
     //     Audiolink
+    //     Nicer syntax for assignment
+    //     Add-assignments
+    //     For loops
     //     Arbitrary writes with geom
     //     Indirect jump
     // Maybe:
