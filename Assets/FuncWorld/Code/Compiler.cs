@@ -14,8 +14,6 @@ public class Compiler : UdonSharpBehaviour
     //     Lerp with scalar no work
     // Add:
     //     Audiolink
-    //     Nicer syntax for assignment
-    //     Add-assignments
     //     For loops
     //     Arbitrary writes with geom
     //     Indirect jump
@@ -657,12 +655,16 @@ public class Compiler : UdonSharpBehaviour
             {
                 case "set": case "let":
                     Assignment();
+                    Eat(';');
                     return false;
                 case "if":
                     Conditional("end_"+labelCount++);
                     return false;
                 case "while":
-                    Loop(); 
+                    WhileLoop(); 
+                    return false;
+                case "for":
+                    ForLoop();
                     return false;
                 case "fun":
                     FuncDef();
@@ -671,6 +673,7 @@ public class Compiler : UdonSharpBehaviour
                     if (IsAssignment())
                     {
                         Assignment();
+                        Eat(';');
                         return false;
                     }
                     return true;
@@ -768,7 +771,7 @@ public class Compiler : UdonSharpBehaviour
     }
 
     [RecursiveMethod]
-    void Loop()
+    void WhileLoop()
     {
         string startLabel = "start_" + labelCount++;
         string endLabel = "end_" + labelCount++;
@@ -785,6 +788,45 @@ public class Compiler : UdonSharpBehaviour
 
         Block();
         Emit("JUMP", startLabel);
+        
+        Eat('}');
+
+        Emit("LABEL", endLabel);
+    }
+
+    [RecursiveMethod]
+    void ForLoop()
+    {
+        string checkLabel = "check_" + labelCount++;
+        string loopLabel = "loop_" + labelCount++;
+        string incrementLabel = "incr_" + labelCount++;
+        string endLabel = "end_" + labelCount++;
+
+        Eat("for");
+        Eat('(');
+
+        Assignment(); // init
+        Eat(';');
+
+        Emit("LABEL", checkLabel);
+        Expression(); // condition
+        Eat(';');
+
+        Emit("CONDJUMP", endLabel);
+        Emit("JUMP", loopLabel);
+        Emit("LABEL", incrementLabel);
+
+        Assignment(); // increment
+
+        Eat(')');
+
+        Emit("JUMP", checkLabel);
+        Emit("LABEL", loopLabel);
+
+        Eat('{');
+
+        Block();
+        Emit("JUMP", incrementLabel);
         
         Eat('}');
 
@@ -834,7 +876,6 @@ public class Compiler : UdonSharpBehaviour
         {
             Eat('=');
             Expression();
-            Eat(';');
             Emit("SETVAR", ident);
         }
         else if (MatchNext('=') && (Match('+') || Match('-') || Match('*') || Match('/'))) // math assignment
@@ -844,7 +885,6 @@ public class Compiler : UdonSharpBehaviour
             string op = Advance().ToString();
             Eat('=');
             Expression();
-            Eat(';');
 
             Emit("BINOP", op);
             Emit("SETVAR", ident);
@@ -855,7 +895,6 @@ public class Compiler : UdonSharpBehaviour
 
             string op = Advance().ToString();
             Advance();
-            Eat(';');
 
             Emit("PUSHCONST", new Vector4(1f, float.NaN, float.NaN, float.NaN));
             Emit("BINOP", op);
