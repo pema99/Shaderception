@@ -2327,8 +2327,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1739249927}
   m_HandleRect: {fileID: 1739249926}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.11823735
+  m_Value: 0.9999999
+  m_Size: 0.1184105
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2654,8 +2654,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.5, y: -593.99506}
-  m_SizeDelta: {x: 307, y: 1347.29}
+  m_AnchoredPosition: {x: 0.5, y: -593.0099}
+  m_SizeDelta: {x: 307, y: 1345.32}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1175723515
 MonoBehaviour:
@@ -2692,38 +2692,40 @@ MonoBehaviour:
   m_Text: "==== ABOUT ====\nThis is a tiny compiler written in Udon that compiles
     programs to a simple stack based instruction set that executes in a shader. The
     output is used to shade the quads seen around you. Thus, you can write shaders
-    at runtime. For more info, my discord is Pema99#9042.\r\n\r\n==== BUILTIN FUNCTIONS
-    ====\r\nfloat2(x, y) - Make 2D vector\r\nfloat3(x, y, z) - Make 3D vector\r\nfloat4(x,
-    y, z, w) - Make 4D vector\r\nuv() - Get pos of pixel in [0; 1]\r\nxy() - Get
-    pos of pixel in [-10; 10]\r\ntime() - Get instance time\r\nlog(x) - Natural logarithm\r\nlog2(x)
-    - Base 2 logarithm\r\nsin(x) - Sine\r\ncos(x) - Cosine\r\ntan(x) - Tangent\r\nasin(x)
-    - Arcsine\r\nacos(x) - Arccosine\r\natan(x) - Arctangent\r\npow(x, y) - x to
-    power of y\r\nexp(x) - e to power of x\r\nexp2(x) - 2 to power of x\r\nsqrt(x)
-    - Square root\r\nrsqrt(x) - Inverse square root\r\nabs(x) - Absolute value\r\nsign(x)
-    - Sign\r\nfloor(x) - Floor\r\nceil(x) - Ceiling\r\nround(x) - Round\r\nfrac(x)
-    - Fractional part\r\nmod(x, y) - Modulo x with y\r\nmin(x, y) - Min of x and
-    y\r\nmax(x, y) - Max of x and y\r\nclamp(x, y, z) - Clamp x to [y; z]\r\nlerp(x,
-    y, z) - Lerp [x; y] with z\r\nstep(x, y) - Step\r\nsmoothstep(x, y, z) - Smoothstep\ndot(x,
-    y)\r - Dot product of x and y\ncross(x, y) - Cross product of x and y\ndistance(x,
-    y) - Distance from x to y\nnormalize(x) - Normalize vector\nlength(x) - Length
-    of vector x\nreflect(i, n) - Reflect i over n\nrefract(i, n, ior) - Refract i
-    over n with ior\nswizzle(val, mask) - Internal use\r\nself(uv) - Get last frames
-    data at given UV\nresolution() - Get width and height of frame\nbutton() - Input
-    state as 4D vector (use, jump, grab, drop)\naxis() - Axis state as 4D vector
-    (movement xy, look xy)\ncamera(uv) - Sample camera texture\n\r\n==== SYNTAX ==\r==\nSet
-    a variable, note that all assignment must use the set keyword, even after the
-    first declaration:\r\nset a = 5.0;\r\nset a = a + 1;\n\r\nIf-statements use C-syntax:\r\nif
-    (x > 0.5) { ... }\r\nelse if (y > 0.5) { ... }\r\nelse { ... }\r\n\r\nSame with
-    while-statements:\r\nwhile (i < 10) { set i = i + 1; }\r\n\r\nFunctions are defined
-    as so:\r\nfun add(a, b)\r\n{\r\n    set myVal = a + b;\r\n    myVal\r\n}\r\n\nVectors
-    and swizzling:\nlet myVec3 = float3(1, 2, 3);\nlet myVec2 = myVec3.yx;\n\r\nThe
-    language uses implicit returns, so the last expression written without a semicolon
-    at the end will be returned implicitly.\n\n==== INSTRUCTIONS ====\r\nThe VM is
-    a simple stack based one that runs in shader. Instructions are:\r\nPUSHCONST
-    <const> - Push const to stack\r\nPUSHVAR <id> - Push variable to stack\r\nSETVAR
-    <id, mask> - Set variable from popped stack value, mask it\r\nBINOP <op> - Binary
-    operation\r\nUNOP <op> - Unary operation\r\nCALL <id> - Call builtin function\r\nJUMP
-    <loc> - Jump to location\r\nCONDJUMP <loc> - Jump if stack has false value\r"
+    at runtime. For more info, my discord is Pema99#9042.\r\n\n==== SYNTAX ==\r==\nAssign 
+    a variable, let and set keywords are optional:\nlet a = 5.0;\r\nset a = a + 1;\na++;\na
+    -= 2;\na = float3(1, 2, 3);\n\r\nIf-statements use C-syntax:\r\nif (x > 0.5)
+    { ... }\r\nelse if (y > 0.5) { ... }\r\nelse { ... }\r\n\r\nSame with while-loops:\r\nwhile
+    (i < 10) { set i = i + 1; }\r\n\nAnd for-loops:\nfor (let i = 0; i < 10; i++)
+    { ... }\n\r\nFunctions are defined as so:\r\nfun add(a, b)\r\n{\r\n    set myVal
+    = a + b;\r\n    myVal\r\n}\r\n\nVectors and swizzling:\nlet myVec3 = float3(1,
+    2, 3);\nlet myVec2 = myVec3.yx;\n\r\nThe language allows implicit returns, so
+    the last expression written without a semicolon at the end will be returned implicitly.
+    One can also put an explicit return statement:\nfun implicit() { 1 }\nfun explicit()
+    { return 1; }\n\r\n==== BUILTIN FUNCTIONS ====\r\nfloat2(x, y) - Make 2D vector\r\nfloat3(x,
+    y, z) - Make 3D vector\r\nfloat4(x, y, z, w) - Make 4D vector\r\nuv() - Get pos
+    of pixel in [0; 1]\r\nxy() - Get pos of pixel in [-10; 10]\r\ntime() - Get instance
+    time\r\nlog(x) - Natural logarithm\r\nlog2(x) - Base 2 logarithm\r\nsin(x) -
+    Sine\r\ncos(x) - Cosine\r\ntan(x) - Tangent\r\nasin(x) - Arcsine\r\nacos(x) -
+    Arccosine\r\natan(x) - Arctangent\r\npow(x, y) - x to power of y\r\nexp(x) -
+    e to power of x\r\nexp2(x) - 2 to power of x\r\nsqrt(x) - Square root\r\nrsqrt(x)
+    - Inverse square root\r\nabs(x) - Absolute value\r\nsign(x) - Sign\r\nfloor(x)
+    - Floor\r\nceil(x) - Ceiling\r\nround(x) - Round\r\nfrac(x) - Fractional part\r\nmod(x,
+    y) - Modulo x with y\r\nmin(x, y) - Min of x and y\r\nmax(x, y) - Max of x and
+    y\r\nclamp(x, y, z) - Clamp x to [y; z]\r\nlerp(x, y, z) - Lerp [x; y] with z\r\nstep(x,
+    y) - Step\r\nsmoothstep(x, y, z) - Smoothstep\ndot(x, y)\r - Dot product of x
+    and y\ncross(x, y) - Cross product of x and y\ndistance(x, y) - Distance from
+    x to y\nnormalize(x) - Normalize vector\nlength(x) - Length of vector x\nreflect(i,
+    n) - Reflect i over n\nrefract(i, n, ior) - Refract i over n with ior\nswizzle(val,
+    mask) - Internal use\r\nself(uv) - Get last frames data at given UV\nresolution()
+    - Get width and height of frame\nbutton() - Input state as 4D vector (use, jump,
+    grab, drop)\naxis() - Axis state as 4D vector (movement xy, look xy)\ncamera(uv)
+    - Sample camera texture\n\n==== INSTRUCTIONS ====\r\nThe VM is a simple stack
+    based one that runs in shader. Instructions are:\r\nPUSHCONST <const> - Push
+    const to stack\r\nPUSHVAR <id> - Push variable to stack\r\nSETVAR <id, mask>
+    - Set variable from popped stack value, mask it\r\nBINOP <op> - Binary operation\r\nUNOP
+    <op> - Unary operation\r\nCALL <id> - Call builtin function\r\nJUMP <loc> - Jump
+    to location\r\nCONDJUMP <loc> - Jump if stack has false value\r"
 --- !u!222 &1175723516
 CanvasRenderer:
   m_ObjectHideFlags: 0

@@ -14,7 +14,6 @@ public class Compiler : UdonSharpBehaviour
     //     Lerp with scalar no work
     // Add:
     //     Audiolink
-    //     For loops
     //     Arbitrary writes with geom
     //     Indirect jump
     // Maybe:
@@ -638,8 +637,15 @@ public class Compiler : UdonSharpBehaviour
     {
         while (!IsAtEnd() && !Statement());
 
+        // optional return statement
+        bool hasReturn = Match("return");
+        if (hasReturn) Advance();
+
         // final expression is evaluated
         Expression();
+
+        // optional semicolon for return
+        if (hasReturn) Eat(';');
 
         if (!IsAtEnd() && !Match('}')) Error("End of block reached, but there is more code.");
     }
