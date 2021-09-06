@@ -11,7 +11,8 @@ public class Compiler : UdonSharpBehaviour
     // TODO:
     // Problems:
     //     Error handling!
-    //     Check function arity and return error
+    //     Implicit casts for user defined functions
+    //     Lerp with scalar broken
     // Add:
     //     Audiolink
     //     Arbitrary writes with geom
@@ -63,12 +64,12 @@ public class Compiler : UdonSharpBehaviour
         inputAxis.y = val;
     }
 
-    public override void InputLookVertical(float val, UdonInputEventArgs args)
+    public override void InputLookHorizontal(float val, UdonInputEventArgs args)
     {
         inputAxis.z = val;
     }
 
-    public override void InputLookHorizontal(float val, UdonInputEventArgs args)
+    public override void InputLookVertical(float val, UdonInputEventArgs args)
     {
         inputAxis.w = val;
     }
@@ -199,7 +200,8 @@ public class Compiler : UdonSharpBehaviour
             case "resolution": return 42;
             case "button":     return 43;
             case "axis":       return 44;
-            case "camera":     return 45;    
+            case "camera":     return 45;
+            case "deltatime":  return 46;    
             default:           return 0;
         }
     }
@@ -522,6 +524,7 @@ public class Compiler : UdonSharpBehaviour
             case 43: return 0;
             case 44: return 0;
             case 45: return 1;
+            case 46: return 0;
             default:
                 for (int i = 0; i < funcIdents.Length; i++)
                 {
