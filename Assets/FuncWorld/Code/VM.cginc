@@ -420,7 +420,7 @@ float4 runVM(float2 uv)
                 }
                 break;
 
-            case 9: // LABEL <nop>
+            default:
                 break;
         }
     }

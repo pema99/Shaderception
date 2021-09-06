@@ -12,14 +12,12 @@ public class Compiler : UdonSharpBehaviour
     // Problems:
     //     Error handling!
     //     Check function arity and return error
-    //     Lerp with scalar no work
     // Add:
     //     Audiolink
     //     Arbitrary writes with geom
     //     Indirect jump
     // Maybe:
     //     Remove sets?
-    //     Explicit return?
     //     Non-inlined functions. Actual callstack?
     //     C-style defines
 
