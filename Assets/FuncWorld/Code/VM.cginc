@@ -425,5 +425,6 @@ float4 runVM(float2 uv)
         }
     }
 
-    return maskSentinel(popStack(), 0);
+    float4 result = popStack();
+    return maskSentinel(dynamicCast(result, getDimension(result), 4), 0);
 }
