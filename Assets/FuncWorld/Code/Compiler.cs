@@ -473,6 +473,76 @@ public class Compiler : UdonSharpBehaviour
     int currentParsed = 0;
     object[][] parsed;
 
+    int GetFuncArity(string ident)
+    {
+        switch (FuncIdentToIndex(ident))
+        {
+            case 1:  return 1;
+            case 2:  return 1;
+            case 3:  return 1;
+            case 4:  return 1;
+            case 5:  return 1;
+            case 6:  return 1;
+            case 7:  return 1;
+            case 8:  return 1;
+            case 9:  return 2;
+            case 10: return 1;
+            case 11: return 1;
+            case 12: return 1;
+            case 13: return 1;
+            case 14: return 1;
+            case 15: return 1;
+            case 16: return 1;
+            case 17: return 1;
+            case 18: return 1;
+            case 19: return 2;
+            case 20: return 2;
+            case 21: return 2;
+            case 22: return 3;
+            case 23: return 3;
+            case 24: return 2;
+            case 25: return 3;
+            case 26: return 2;
+            case 27: return 3;
+            case 28: return 4;
+            case 29: return 2;
+            case 30: return 0;
+            case 31: return 0;
+            case 32: return 0;
+            case 33: return 0;
+            case 34: return 2;
+            case 35: return 2;
+            case 36: return 2;
+            case 37: return 1;
+            case 38: return 1;
+            case 39: return 2;
+            case 40: return 3;
+            case 41: return 1;
+            case 42: return 0;
+            case 43: return 0;
+            case 44: return 0;
+            case 45: return 1;
+            default:
+                for (int i = 0; i < funcIdents.Length; i++)
+                {
+                    if (funcIdents[i] == null) break;
+
+                    if (funcIdents[i] == ident)
+                    {
+                        int count = 0;
+                        for (int j = 0; j < funcParams[i].Length; j++)
+                        {
+                            if (funcParams[i][j] == null) break;
+
+                            count++;
+                        }
+                        return count;
+                    }
+                }
+                return -1;
+        }
+    }
+
     void SwitchToFunction(string ident, string[] parameters)
     {
         for (int i = 0; i < funcIdents.Length; i++)
@@ -916,11 +986,27 @@ public class Compiler : UdonSharpBehaviour
     {
         string ident = EatIdent(); // ident
         Eat('(');
-        Expression();
-        while (Match(','))
+        if (!Match(')'))
         {
-            Eat(',');
+            int arity = 1;
             Expression();
+            while (Match(','))
+            {
+                Eat(',');
+                Expression();
+                arity++;
+            }
+
+            // Check arity with expectations
+            int expected = GetFuncArity(ident);
+            if (expected == -1)
+            {
+                Error($"Use of undefined function {ident}.");
+            }
+            else if (expected != arity)
+            {
+                Error($"Incorrect number of parameters to function {ident}, expected {expected}, got {arity}.");
+            }
         }
         Eat(')');
         Emit("CALL", ident);

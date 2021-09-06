@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.07924773, g: 0.07262555, b: 0.060329873, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1832,25 +1832,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 800832168}
   m_CullTransparentMesh: 0
---- !u!1 &804329973 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1094421957795851142, guid: 8894fa7e4588a5c4fab98453e558847d,
-    type: 3}
-  m_PrefabInstance: {fileID: 450775146}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &804329978
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 804329973}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contentType: 1
 --- !u!1 &839118198
 GameObject:
   m_ObjectHideFlags: 0
@@ -4272,33 +4253,34 @@ GameObject:
     (rightPaddlePos.y < wallTop)\\n\t{\\n\t\tset rightPaddlePos.y = wallTop;\\n\t}\\n\telse
     if (rightPaddlePos.y + rightPaddleSize.y > wallBottom)\\n\t{\\n\t\tset rightPaddlePos.y
     = wallBottom - rightPaddleSize.y;\\n\t}\\n\tfloat4(rightPaddlePos.y, rightPaddleScore,
-    0, 0)\\n}\\nfun DrawBoard()\\n{\\n\tif (pointbox(uv.x, uv.y, ballPos.x, ballPos.y,
-    ballSize.x, ballSize.y))\\n\t{\\n\t\tfloat4(1, 0, 0, 0)\\n\t}\\n\telse if (pointbox(uv.x,
-    uv.y, leftPaddlePos.x, leftPaddlePos.y, leftPaddleSize.x, leftPaddleSize.y))\\n\t{\\n\t\tfloat4(0,
-    1, 0, 0)\\n\t}\\n\telse if (pointbox(uv.x, uv.y, rightPaddlePos.x, rightPaddlePos.y,
-    rightPaddleSize.x, rightPaddleSize.y))\\n\t{\\n\t\tfloat4(0, 0, 1, 0)\\n\t}\\n\telse
-    if (uv.x > (unitSize.x * 32) && uv.x < (unitSize.x * 33))\\n\t{\\n\t\tfloat4(1,
-    1, 1, 0)\\n\t}\\n\telse if (uv.x < 0.5)\\n\t{\\n\t\tDrawDigit(28, 56, leftPaddleScore)\\n\t}\\n\telse\\n\t{\\n\t\tDrawDigit(34,
-    56, rightPaddleScore)\\n\t}\\n}\\nfun DrawGutter()\\n{\\n\tfloat4(1, 1, 1, 0)\\n}\\nfun
-    DrawDigit(inx, iny, digit)\\n{\\n\tset x = floor(uv.x * 64) - inx;\\n\tset y
-    = floor(uv.y * 64) - iny;\\n\t\\n\tif (x >= 0 && x <= 2)\\n\t{\\n\t\tif (digit
-    == 0)\\n\t\t{\\n\t\t\tif (y == 4) { textColor }\\n\t\t\telse if (y == 3) { if
-    (x != 1) { textColor } }\\n\t\t\telse if (y == 2) { if (x != 1) { textColor }
-    }\\n\t\t\telse if (y == 1) { if (x != 1) { textColor } }\\n\t\t\telse if (y ==
-    0) { textColor }\\n\t\t}\\n\t\telse if (digit == 1)\\n\t\t{\\n\t\t\tif (y ==
-    4) { if (x == 1) { textColor } }\\n\t\t\telse if (y == 3) { if (x != 2) { textColor
-    } }\\n\t\t\telse if (y == 2) { if (x == 1) { textColor } }\\n\t\t\telse if (y
-    == 1) { if (x == 1) { textColor } }\\n\t\t\telse if (y == 0) { if (x == 1) {
-    textColor } }\\n\t\t}\\n\t\telse if (digit == 2)\\n\t\t{\\n\t\t\tif (y == 4)
-    { textColor }\\n\t\t\telse if (y == 3) { if (x == 2) { textColor } }\\n\t\t\telse
+    0, 0)\\n}\\nfun DrawDigit(inx, iny, digit)\\n{\\n\tset x = floor(uv.x * 64) -
+    inx;\\n\tset y = floor(uv.y * 64) - iny;\\n\t\\n\tif (x >= 0 && x <= 2)\\n\t{\\n\t\tif
+    (digit == 0)\\n\t\t{\\n\t\t\tif (y == 4) { textColor }\\n\t\t\telse if (y ==
+    3) { if (x != 1) { textColor } }\\n\t\t\telse if (y == 2) { if (x != 1) { textColor
+    } }\\n\t\t\telse if (y == 1) { if (x != 1) { textColor } }\\n\t\t\telse if (y
+    == 0) { textColor }\\n\t\t}\\n\t\telse if (digit == 1)\\n\t\t{\\n\t\t\tif (y
+    == 4) { if (x == 1) { textColor } }\\n\t\t\telse if (y == 3) { if (x != 2) {
+    textColor } }\\n\t\t\telse if (y == 2) { if (x == 1) { textColor } }\\n\t\t\telse
+    if (y == 1) { if (x == 1) { textColor } }\\n\t\t\telse if (y == 0) { if (x ==
+    1) { textColor } }\\n\t\t}\\n\t\telse if (digit == 2)\\n\t\t{\\n\t\t\tif (y ==
+    4) { textColor }\\n\t\t\telse if (y == 3) { if (x == 2) { textColor } }\\n\t\t\telse
     if (y == 2) { textColor }\\n\t\t\telse if (y == 1) { if (x == 0) { textColor
     } }\\n\t\t\telse if (y == 0) { textColor }\\n\t\t}\\n\t\telse if (digit == 3)\\n\t\t{\\n\t\t\tif
     (y == 4) { textColor }\\n\t\t\telse if (y == 3) { if (x == 2) { textColor } }\\n\t\t\telse
     if (y == 2) { textColor }\\n\t\t\telse if (y == 1) { if (x == 2) { textColor
-    } }\\n\t\t\telse if (y == 0) { textColor }\\n\t\t}\\n\t}\\n}\\nif (uv.y < wallTop)\\n{\\n\tif
-    (uv.x < wallLeft)\\n\t{\\n\t\tUpdatePower()\\n\t}\\n\telse if (uv.x > wallRight)\\n\t{\\n\t\tUpdateBall()\\n\t}\\n\telse\\n\t{\\n\t\tDrawGutter()\\n\t}\\n}\\nelse
+    } }\\n\t\t\telse if (y == 0) { textColor }\\n\t\t}\\n\t}\\n}\\nfun DrawBoard()\\n{\\n\tif
+    (pointbox(uv.x, uv.y, ballPos.x, ballPos.y, ballSize.x, ballSize.y))\\n\t{\\n\t\tfloat4(1,
+    0, 0, 0)\\n\t}\\n\telse if (pointbox(uv.x, uv.y, leftPaddlePos.x, leftPaddlePos.y,
+    leftPaddleSize.x, leftPaddleSize.y))\\n\t{\\n\t\tfloat4(0, 1, 0, 0)\\n\t}\\n\telse
+    if (pointbox(uv.x, uv.y, rightPaddlePos.x, rightPaddlePos.y, rightPaddleSize.x,
+    rightPaddleSize.y))\\n\t{\\n\t\tfloat4(0, 0, 1, 0)\\n\t}\\n\telse if (uv.x >
+    (unitSize.x * 32) && uv.x < (unitSize.x * 33))\\n\t{\\n\t\tfloat4(1, 1, 1, 0)\\n\t}\\n\telse
+    if (uv.x < 0.5)\\n\t{\\n\t\tDrawDigit(28, 56, leftPaddleScore)\\n\t}\\n\telse\\n\t{\\n\t\tDrawDigit(34,
+    56, rightPaddleScore)\\n\t}\\n}\\nfun DrawGutter()\\n{\\n\tfloat4(1, 1, 1, 0)\\n}\\nif
+    (uv.y < wallTop)\\n{\\n\tif (uv.x < wallLeft)\\n\t{\\n\t\tUpdatePower()\\n\t}\\n\telse
+    if (uv.x > wallRight)\\n\t{\\n\t\tUpdateBall()\\n\t}\\n\telse\\n\t{\\n\t\tDrawGutter()\\n\t}\\n}\\nelse
     if (uv.y > wallBottom)\\n{\\n\tif (uv.x < wallLeft)\\n\t{\\n\t\tUpdateLeftPaddle()\\n\t}\\n\telse
-    if (uv.x > wallRight)\\n\t{\\n\t\tUpdateRightPaddle()\\n\t}\\n\telse\\n\t{\\n\t\tDrawGutter()\\n\t}\\n}\\nelse\\n{\\n\tDrawBoard()\\n} "
+    if (uv.x > wallRight)\\n\t{\\n\t\tUpdateRightPaddle()\\n\t}\\n\telse\\n\t{\\n\t\tDrawGutter()\\n\t}\\n}\\nelse\\n{\\n\tDrawBoard()\\n}"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
