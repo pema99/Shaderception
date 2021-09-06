@@ -11,6 +11,7 @@ public class Compiler : UdonSharpBehaviour
     // TODO:
     // Problems:
     //     Error handling!
+    //     Check function arity and return error
     //     Lerp with scalar no work
     // Add:
     //     Audiolink
