@@ -1137,7 +1137,7 @@ public class Compiler : UdonSharpBehaviour
                 Expression();
                 Eat(')');
             }
-            else if (Match('+') || Match('-')) // unary op
+            else if (Match('+') || Match('-') || Match('!')) // unary op
             {
                 var op = Advance();
                 Term();

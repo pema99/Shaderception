@@ -379,7 +379,14 @@ float4 runVM(float2 uv)
 
             case 4: // UNOP <char>
                 float4 rr = popStack();
-                pushStack(opi == '-' ? -rr : rr);
+                uint dim = getDimension(rr);
+                [forcecase] switch(opi)
+                {
+                    case '-': rr = -rr;  break;
+                    case '!': rr = !rr;  break;
+                    default:  break;
+                }
+                pushStack(restoreSentinel(rr, getSentinelMask(dim)));
                 break;
 
             case 5: // CALL <uint>
