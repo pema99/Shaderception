@@ -163,6 +163,17 @@ float4 popStack()
 }
 
 // Builtin functions
+float4 getSentinelMask(uint dim)
+{
+    [forcecase] switch (dim)
+    {
+        case 1:  return float4(0, getSentinel().xxx);
+        case 2:  return float4(0, 0, getSentinel().xx);
+        case 3:  return float4(0, 0, 0, getSentinel().x);
+        default: return 0;
+    }
+}
+
 float4 getFunSentinelMask(uint opi, uint arity, float4x4 ops)
 {
     // Note to future Pema:
@@ -179,13 +190,7 @@ float4 getFunSentinelMask(uint opi, uint arity, float4x4 ops)
         {
             maxDim = max(maxDim, getDimension(ops[arity-1-i]));
         }
-        [forcecase] switch (maxDim)
-        {
-            case 1:  return float4(0, getSentinel().xxx);
-            case 2:  return float4(0, 0, getSentinel().xx);
-            case 3:  return float4(0, 0, 0, getSentinel().x);
-            default: return 0;
-        }
+        return getSentinelMask(maxDim);
     }
     else
     {
@@ -340,6 +345,7 @@ float4 runVM(float2 uv)
             case 3: // BINOP <char>
                 float4 r = popStack();
                 float4 l = popStack();
+                float4 rOrig = r, lOrig = l;
 
                 // if dimensions mismatch, treat the smaller as full width
                 uint rDim = getDimension(r);
@@ -349,22 +355,26 @@ float4 runVM(float2 uv)
                 if      (rSingle && !lSingle) r = dynamicCast(r, rDim, max(rDim, lDim));
                 else if (!rSingle && lSingle) l = dynamicCast(l, lDim, max(rDim, lDim));
 
+                // get result of binop
+                float4 res = 0;
                 [forcecase] switch(opi)
                 {
-                    case 1:  pushStack(l + r);  break;
-                    case 2:  pushStack(l - r);  break;
-                    case 3:  pushStack(l * r);  break;
-                    case 4:  pushStack(l / r);  break;
-                    case 5:  pushStack(l < r);  break;
-                    case 6:  pushStack(l > r);  break;
-                    case 7:  pushStack(l == r); break;
-                    case 8:  pushStack(l <= r); break;
-                    case 9:  pushStack(l >= r); break;
-                    case 10: pushStack(l != r); break;
-                    case 11: pushStack(l && r); break;
-                    case 12: pushStack(l || r); break;
+                    case 1:  res = l + r;  break;
+                    case 2:  res = l - r;  break;
+                    case 3:  res = l * r;  break;
+                    case 4:  res = l / r;  break;
+                    case 5:  res = l < r;  break;
+                    case 6:  res = l > r;  break;
+                    case 7:  res = l == r; break;
+                    case 8:  res = l <= r; break;
+                    case 9:  res = l >= r; break;
+                    case 10: res = l != r; break;
+                    case 11: res = l && r; break;
+                    case 12: res = l || r; break;
                     default: break;
                 }
+                
+                pushStack(restoreSentinel(res, getSentinelMask(max(rDim, lDim))));
                 break;
 
             case 4: // UNOP <char>
