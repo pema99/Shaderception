@@ -19,7 +19,6 @@ public class Compiler : UdonSharpBehaviour
     //     Arbitrary writes with geom
     //     Indirect jump
     // Maybe:
-    //     Remove sets?
     //     Non-inlined functions. Actual callstack?
     //     C-style defines
 
@@ -1228,7 +1227,16 @@ public class Compiler : UdonSharpBehaviour
                 i++;
             }
 
-            // single token, skip whitespace
+            // comments
+            else if (c == '/' && i+1 < input.Length && input[i+1] == '/')
+            {
+                while (i < input.Length && input[i] != '\n')
+                {
+                    i++;
+                }
+            }
+
+            // single token
             else
             {
                 lexed[currentLexed++] = c;
