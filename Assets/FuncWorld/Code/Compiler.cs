@@ -349,10 +349,13 @@ public class Compiler : UdonSharpBehaviour
                     {
                         // store previous renaming table
                         string[] prevRenameFrom = null;
-                        if (renameFrom != null)
+                        string[] prevRenameTo = null;
+                        if (renameFrom != null || renameTo != null)
                         {
                             prevRenameFrom = new string[renameFrom.Length];
                             System.Array.Copy(renameFrom, prevRenameFrom, renameFrom.Length);
+                            prevRenameTo = new string[renameTo.Length];
+                            System.Array.Copy(renameTo, prevRenameTo, renameTo.Length);
                         }
 
                         // setup renaming table
@@ -369,6 +372,7 @@ public class Compiler : UdonSharpBehaviour
 
                         // restore renaming table
                         renameFrom = prevRenameFrom;
+                        renameTo = prevRenameTo;
                         break;
                     }
                 }
