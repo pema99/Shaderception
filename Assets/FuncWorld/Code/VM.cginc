@@ -2,6 +2,8 @@
 float4 _InputButton;
 float4 _InputAxis;
 sampler2D _Camera;
+sampler2D _Video;
+float _IsAVProInput;
 
 // Program binary
 cbuffer ProgramBuffer {
@@ -242,6 +244,7 @@ uint2 getFunInfo(uint opi)
         case 44: return uint2(0, 0);
         case 45: return uint2(1, 0);
         case 46: return uint2(0, 0);
+        case 47: return uint2(1, 0);
         default: return uint2(0, 0); 
     }
 }
@@ -296,6 +299,7 @@ float4 callFun(uint opi, float4x4 ops)
         case 44: return _InputAxis;
         case 45: return float4(tex2Dlod(_Camera, float4(ops[0].xy, 0, 0)).xyz, getSentinel().x);
         case 46: return unity_DeltaTime;
+        case 47: return float4(tex2Dlod(_Video, float4(_IsAVProInput ? float2(ops[0].x, 1-ops[0].y) : ops[0].xy, 0, 0)).xyz, getSentinel().x);
         default: return 0; 
     }
 }

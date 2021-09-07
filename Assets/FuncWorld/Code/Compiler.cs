@@ -201,7 +201,8 @@ public class Compiler : UdonSharpBehaviour
             case "button":     return 43;
             case "axis":       return 44;
             case "camera":     return 45;
-            case "deltatime":  return 46;    
+            case "deltatime":  return 46;
+            case "video":      return 47;
             default:           return 0;
         }
     }
@@ -525,6 +526,7 @@ public class Compiler : UdonSharpBehaviour
             case 44: return 0;
             case 45: return 1;
             case 46: return 0;
+            case 47: return 1;
             default:
                 for (int i = 0; i < funcIdents.Length; i++)
                 {

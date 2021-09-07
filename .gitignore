@@ -52,6 +52,12 @@ crashlytics-build.properties
 /Assets/SerializedUdonPrograms.meta
 /Assets/TextMesh Pro.meta
 /Assets/TextMesh Pro/
+/Assets/VertexColorPens.meta
+/Assets/VertexColorPens/
+/Assets/VRWorldToolkit/
+/Assets/VRWorldToolkit.meta
+/Assets/_LastBuild.meta
+/Assets/_LastBuild/
 
 /Assets/CyanEmu/
 /Assets/CyanEmu.meta
@@ -61,6 +67,9 @@ crashlytics-build.properties
 /Assets/Plugins.meta
 /Assets/TurboRename/
 /Assets/TurboRename.meta
+/Assets/AudioLink/
+/Assets/USharpVideo.meta
+/Assets/USharpVideo/
 /Assets/AudioLink.meta
 /Assets/AudioLinkSandbox/Media/
 /Assets/AudioLinkSandbox/Media.meta

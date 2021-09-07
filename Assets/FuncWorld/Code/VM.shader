@@ -3,6 +3,8 @@
     Properties
     {
         _Camera ("Camera", 2D) = "white"{}
+        _Video ("Video", 2D) = "white"{}
+        [Toggle(_)] _IsAVProInput("Is AV Pro Input", Int) = 0
     }
     SubShader
     {
