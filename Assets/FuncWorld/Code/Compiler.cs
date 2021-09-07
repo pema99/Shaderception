@@ -19,6 +19,7 @@ public class Compiler : UdonSharpBehaviour
     //     Arbitrary writes with geom
     //     Indirect jump
     // Maybe:
+    //     Early returns
     //     Non-inlined functions. Actual callstack?
     //     C-style defines
 
