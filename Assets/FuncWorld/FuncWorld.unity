@@ -4133,8 +4133,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1739249927}
   m_HandleRect: {fileID: 1739249926}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.1080249
+  m_Value: 0.99976856
+  m_Size: 0.10331142
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4460,8 +4460,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.5, y: -657.68}
-  m_SizeDelta: {x: 307, y: 1474.66}
+  m_AnchoredPosition: {x: 0.5, y: -691}
+  m_SizeDelta: {x: 307, y: 1541.94}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1175723515
 MonoBehaviour:
@@ -4508,31 +4508,33 @@ MonoBehaviour:
     2, 3);\nlet myVec2 = myVec3.yx;\n\r\nThe language allows implicit returns, so
     the last expression written without a semicolon at the end will be returned implicitly.
     One can also put an explicit return statement:\nfun implicit() { 1 }\nfun explicit()
-    { return 1; }\n\r\n==== BUILTIN FUNCTIONS ====\r\nfloat2(x, y) - Make 2D vector\r\nfloat3(x,
-    y, z) - Make 3D vector\r\nfloat4(x, y, z, w) - Make 4D vector\r\nuv() - Get pos
-    of pixel in [0; 1]\r\nxy() - Get pos of pixel in [-10; 10]\r\ntime() - Get instance
-    time\r\nlog(x) - Natural logarithm\r\nlog2(x) - Base 2 logarithm\r\nsin(x) -
-    Sine\r\ncos(x) - Cosine\r\ntan(x) - Tangent\r\nasin(x) - Arcsine\r\nacos(x) -
-    Arccosine\r\natan(x) - Arctangent\r\npow(x, y) - x to power of y\r\nexp(x) -
-    e to power of x\r\nexp2(x) - 2 to power of x\r\nsqrt(x) - Square root\r\nrsqrt(x)
-    - Inverse square root\r\nabs(x) - Absolute value\r\nsign(x) - Sign\r\nfloor(x)
-    - Floor\r\nceil(x) - Ceiling\r\nround(x) - Round\r\nfrac(x) - Fractional part\r\nmod(x,
-    y) - Modulo x with y\r\nmin(x, y) - Min of x and y\r\nmax(x, y) - Max of x and
-    y\r\nclamp(x, y, z) - Clamp x to [y; z]\r\nlerp(x, y, z) - Lerp [x; y] with z\r\nstep(x,
-    y) - Step\r\nsmoothstep(x, y, z) - Smoothstep\ndot(x, y)\r - Dot product of x
-    and y\ncross(x, y) - Cross product of x and y\ndistance(x, y) - Distance from
-    x to y\nnormalize(x) - Normalize vector\nlength(x) - Length of vector x\nreflect(i,
-    n) - Reflect i over n\nrefract(i, n, ior) - Refract i over n with ior\nswizzle(val,
-    mask) - Internal use\r\nself(uv) - Get last frames data at given UV\nresolution()
-    - Get width and height of frame\nbutton() - Input state as 4D vector (use, jump,
-    grab, drop)\naxis() - Axis state as 4D vector (movement xy, look xy)\ncamera(uv)
-    - Sample camera texture\ndeltatime() - Frame delta (dt, 1/dt, smoothDt, 1/smoothDt)\nvideo(uv)
-    - Sample video player texture\n\n==== INSTRUCTIONS ====\r\nThe VM is a simple
-    stack based one that runs in shader. Instructions are:\r\nPUSHCONST <const> -
-    Push const to stack\r\nPUSHVAR <id> - Push variable to stack\r\nSETVAR <id, mask>
-    - Set variable from popped stack value, mask it\r\nBINOP <op> - Binary operation\r\nUNOP
-    <op> - Unary operation\r\nCALL <id> - Call builtin function\r\nJUMP <loc> - Jump
-    to location\r\nCONDJUMP <loc> - Jump if stack has false value\r"
+    { return 1; }\n\r\nThe language also has comments:\n// this is a comment\n\n====
+    BUILTIN FUNCTIONS ====\r\nfloat2(x, y) - Make 2D vector\r\nfloat3(x, y, z) -
+    Make 3D vector\r\nfloat4(x, y, z, w) - Make 4D vector\r\nuv() - Get pos of pixel
+    in [0; 1]\r\nxy() - Get pos of pixel in [-10; 10]\r\ntime() - Get instance time\r\nlog(x)
+    - Natural logarithm\r\nlog2(x) - Base 2 logarithm\r\nsin(x) - Sine\r\ncos(x)
+    - Cosine\r\ntan(x) - Tangent\r\nasin(x) - Arcsine\r\nacos(x) - Arccosine\r\natan(x)
+    - Arctangent\r\npow(x, y) - x to power of y\r\nexp(x) - e to power of x\r\nexp2(x)
+    - 2 to power of x\r\nsqrt(x) - Square root\r\nrsqrt(x) - Inverse square root\r\nabs(x)
+    - Absolute value\r\nsign(x) - Sign\r\nfloor(x) - Floor\r\nceil(x) - Ceiling\r\nround(x)
+    - Round\r\nfrac(x) - Fractional part\r\nmod(x, y) - Modulo x with y\r\nmin(x,
+    y) - Min of x and y\r\nmax(x, y) - Max of x and y\r\nclamp(x, y, z) - Clamp x
+    to [y; z]\r\nlerp(x, y, z) - Lerp [x; y] with z\r\nstep(x, y) - Step\r\nsmoothstep(x,
+    y, z) - Smoothstep\ndot(x, y)\r - Dot product of x and y\ncross(x, y) - Cross
+    product of x and y\ndistance(x, y) - Distance from x to y\nnormalize(x) - Normalize
+    vector\nlength(x) - Length of vector x\nreflect(i, n) - Reflect i over n\nrefract(i,
+    n, ior) - Refract i over n with ior\nall(x) - Check if all elements are non-zero\nany(x)
+    - Check if any elements are non-zero\nswizzle(val, mask) - Internal use\r\nself(uv)
+    - Get last frames data at given UV\nresolution() - Get width and height of frame\nbutton()
+    - Input state as 4D vector (use, jump, grab, drop)\naxis() - Axis state as 4D
+    vector (movement xy, look xy)\ncamera(uv) - Sample camera texture\ndeltatime()
+    - Frame delta (dt, 1/dt, smoothDt, 1/smoothDt)\nvideo(uv) - Sample video player
+    texture\n\n==== INSTRUCTIONS ====\r\nThe VM is a simple stack based one that
+    runs in shader. Instructions are:\r\nPUSHCONST <const> - Push const to stack\r\nPUSHVAR
+    <id> - Push variable to stack\r\nSETVAR <id, mask> - Set variable from popped
+    stack value, mask it\r\nBINOP <op> - Binary operation\r\nUNOP <op> - Unary operation\r\nCALL
+    <id> - Call builtin function\r\nJUMP <loc> - Jump to location\r\nCONDJUMP <loc>
+    - Jump if stack has false value\r"
 --- !u!222 &1175723516
 CanvasRenderer:
   m_ObjectHideFlags: 0
