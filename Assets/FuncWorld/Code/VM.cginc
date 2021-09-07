@@ -245,11 +245,13 @@ uint2 getFunInfo(uint opi)
         case 45: return uint2(1, 0);
         case 46: return uint2(0, 0);
         case 47: return uint2(1, 0);
+        case 48: return uint2(1, 0);
+        case 49: return uint2(1, 0);
         default: return uint2(0, 0); 
     }
 }
 
-float4 callFun(uint opi, float4x4 ops)
+float4 callFun(uint opi, float4x4 ops, uint4 dims)
 {
     [forcecase] switch(opi)
     {
@@ -300,6 +302,8 @@ float4 callFun(uint opi, float4x4 ops)
         case 45: return float4(tex2Dlod(_Camera, float4(ops[0].xy, 0, 0)).xyz, getSentinel().x);
         case 46: return unity_DeltaTime;
         case 47: return float4(tex2Dlod(_Video, float4(_IsAVProInput ? float2(ops[0].x, 1-ops[0].y) : ops[0].xy, 0, 0)).xyz, getSentinel().x);
+        case 48: return float4(dims.x == 1 ? all(ops[0].x) : (dims.x == 2 ? all(ops[0].xy) : (dims.x == 3 ? all(ops[0].xyz) : all(ops[0]))), getSentinel().xxx);
+        case 49: return float4(any(ops[0]), getSentinel().xxx);
         default: return 0; 
     }
 }
@@ -390,7 +394,8 @@ float4 runVM(float2 uv)
                     maskSentinel(vals[2], 0),
                     maskSentinel(vals[3], 0)
                 );
-                float4x4 rev = 0;
+                float4x4 revMasked = 0;
+                uint4 revDims = 0;
                 for (uint j = 0; j < arity; j++)
                 {
                     float4 vall = masked[arity-1-j];
@@ -399,10 +404,10 @@ float4 runVM(float2 uv)
                     {
                         vall = maskSentinel(dynamicCast(vall, dim, maxDim), 0);
                     }
-                    rev[j] = vall;
+                    revMasked[j] = vall;
+                    revDims[j] = dim;
                 }
-
-                float4 retVal = callFun(opi, rev);
+                float4 retVal = callFun(opi, revMasked, revDims);
                 retVal = restoreSentinel(retVal, getFunSentinelMask(opi, arity, vals));
                 pushStack(retVal);
                 break;

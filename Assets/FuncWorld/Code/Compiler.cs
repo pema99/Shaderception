@@ -13,6 +13,7 @@ public class Compiler : UdonSharpBehaviour
     //     Error handling!
     //     Implicit casts for user defined functions
     //     Lerp with scalar broken
+    //     Don't inline forever
     // Add:
     //     Audiolink
     //     Arbitrary writes with geom
@@ -203,6 +204,8 @@ public class Compiler : UdonSharpBehaviour
             case "camera":     return 45;
             case "deltatime":  return 46;
             case "video":      return 47;
+            case "all":        return 48;
+            case "any":        return 49;
             default:           return 0;
         }
     }
@@ -527,6 +530,8 @@ public class Compiler : UdonSharpBehaviour
             case 45: return 1;
             case 46: return 0;
             case 47: return 1;
+            case 48: return 1;
+            case 49: return 1;
             default:
                 for (int i = 0; i < funcIdents.Length; i++)
                 {
