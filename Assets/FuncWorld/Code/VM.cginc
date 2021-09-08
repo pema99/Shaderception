@@ -235,7 +235,7 @@ uint2 getFunInfo(uint opi)
         case 30: return uint2(0, 0);
         case 31: return uint2(0, 0);
         case 32: return uint2(0, 0);
-        case 33: return uint2(0, 0);
+        case 33: return uint2(1, 0);
         case 34: return uint2(2, 1);
         case 35: return uint2(2, 1);
         case 36: return uint2(2, 1);

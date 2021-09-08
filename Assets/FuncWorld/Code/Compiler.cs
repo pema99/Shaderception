@@ -568,7 +568,7 @@ public class Compiler : UdonSharpBehaviour
             case 30: return 0;
             case 31: return 0;
             case 32: return 0;
-            case 33: return 0;
+            case 33: return 1;
             case 34: return 2;
             case 35: return 2;
             case 36: return 2;
