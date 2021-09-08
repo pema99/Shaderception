@@ -115,7 +115,10 @@ public class Compiler : UdonSharpBehaviour
         }
 
         // Linking
+        inlineCount = 0;
         regCount = 0;
+        currentGlobals = 0;
+        globals = new string[4092];
         currentLinked = 0;
         linked = new object[4092];
         currentLabels = 0;
@@ -324,9 +327,12 @@ public class Compiler : UdonSharpBehaviour
     }
 
     // Linking
+    int inlineCount = 0;
     int regCount = 0;
     string[] renameFrom;
     string[] renameTo;
+    int currentGlobals;
+    string[] globals;
     int currentLinked;
     object[] linked;
     int currentLabels = 0;
@@ -335,6 +341,8 @@ public class Compiler : UdonSharpBehaviour
     [RecursiveMethod]
     void Inline(int id)
     {
+        int currentInline = inlineCount++;
+
         for (int i = 0; i < parsed[id].Length; i += 2)
         {
             if (parsed[id][i] == null) break;
@@ -395,13 +403,53 @@ public class Compiler : UdonSharpBehaviour
                             }
                         }
                     }
+
+                    // When in global scope, keep track of global variables
+                    string[] local = ((string)parsed[id][i+1]).Split('.');
+                    bool isGlobal = false;
+                    if (id == 0)
+                    {
+                        globals[currentGlobals++] = local[0];
+                        isGlobal = true;
+                    }
+                    // For local vars, prepend function name to avoid ambiguity in different scopes
+                    else
+                    {
+                        for (int j = 0; j < globals.Length; j++)
+                        {
+                            if (globals[j] == null) break;
+                            if (globals[j] == local[0])
+                            {
+                                isGlobal = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isGlobal)
+                    {
+                        linked[currentLinked++] = parsed[id][i];
+                        linked[currentLinked++] = parsed[id][i+1];
+                    }
+                    else
+                    {
+                        linked[currentLinked++] = parsed[id][i];
+                        linked[currentLinked++] = funcIdents[id] + "_" + parsed[id][i+1];
+                    }
                 }
-                // Dont add labels
-                if (parsed[id][i] == "LABEL")
+                // Dont add labels, rename labels per inline
+                else if (parsed[id][i] == "LABEL")
                 {
-                    labels[currentLabels++] = parsed[id][i+1];
+                    labels[currentLabels++] = parsed[id][i+1] + "_" + currentInline;
                     labels[currentLabels++] = currentLinked;
                 }
+                // Rename labes per inline
+                else if (parsed[id][i] == "JUMP" || parsed[id][i] == "CONDJUMP")
+                {
+                    linked[currentLinked++] = parsed[id][i];
+                    linked[currentLinked++] = parsed[id][i+1] + "_" + currentInline;
+                }
+                // All other instructions
                 else
                 {
                     linked[currentLinked++] = parsed[id][i];
@@ -429,7 +477,7 @@ public class Compiler : UdonSharpBehaviour
                 string label = (string)linked[i+1];
                 for (int j = 0; j < labels.Length; j += 2)
                 {
-                    if (labels[j] == label)
+                    if (label.Equals(labels[j]))
                     {
                         linked[i+1] = (float)labels[j+1];
                     }
