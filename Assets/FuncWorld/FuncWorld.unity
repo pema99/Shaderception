@@ -5647,14 +5647,14 @@ GameObject:
   m_Name: fun smin(d1, d2, k)\n{\n    let h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0,
     1.0);\n    lerp(d2, d1, h) - k * h * (1.0 - h)\n}\nfun map(p)\n{\n    let d1
     = length(p) - 0.3;\n    let d2 = length(p + float3(0.2, sin(time().y)*0.3, 0))
-    - 0.3;\n    smin(d1, d2, 0.05)\n}\nfun march(ro, rd)\n{\n    let t = 0;\n   
-    for (let i = 0; i < 10; i++)\n    {\n        let dist = map(ro + t * rd);\n       
-    t += dist;\n    }\n    t\n}\nlet p = 2.0 * (uv() - 0.5);\nlet ro = float3(0.0,
-    0.0, -1.0);\nlet rd = normalize(float3(p.x, p.y, 1));\nlet d = march(ro, rd);\nif
-    (d < 1)\n{\n    let hit = ro + d * rd;\n    let a = map(hit+float3(0.01, 0, 0))
-    - map(hit-float3(0.01, 0, 0));\n    let b = map(hit+float3(0, 0.01, 0)) - map(hit-float3(0,
-    0.01, 0));\n    let c = map(hit+float3(0, 0, 0.01)) - map(hit-float3(0, 0, 0.01));\n   
-    normalize(float3(a, b, c)) * 0.5 + 0.5\n}\nelse\n{\n    0\n}
+    - 0.3;\n    smin(d1, d2, 0.05)\n}\nfun normal(p)\n{\n    let o = float2(0.01,
+    0);\n    normalize(float3(\n        map(p+o.xyy) - map(p-o.xyy),\n        map(p+o.yxy)
+    - map(p-o.yxy),\n        map(p+o.yyx) - map(p-o.yyx)))\n}\nfun march(ro, rd)\n{\n   
+    let t = 0;\n    for (let i = 0; i < 10; i++)\n    {\n        let dist = map(ro
+    + t * rd);\n        t += dist;\n    }\n    t\n}\nlet p = 2.0 * (uv() - 0.5);\nlet
+    ro = float3(0.0, 0.0, -1);\nlet rd = normalize(float3(p.x, p.y, 1));\nlet d =
+    march(ro, rd);\nif (d < 1)\n{\n    normal(ro + d * rd) * 0.5 + 0.5\n}\nelse\n{\n   
+    0\n}
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

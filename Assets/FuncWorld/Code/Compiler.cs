@@ -14,6 +14,7 @@ public class Compiler : UdonSharpBehaviour
     //     Implicit casts for user defined functions
     //     Lerp with scalar broken
     //     Don't inline forever
+    //     Inlining bug: https://pastebin.com/ygMQ8VSn
     // Add:
     //     Audiolink
     //     Arbitrary writes with geom
