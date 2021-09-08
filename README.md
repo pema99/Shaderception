@@ -3,6 +3,8 @@ A compiler written in UdonSharp that compiles shaders written in a small shading
 
 My friend Fuopy wrote an awesome playable pong game using this that you can try out, and plans to collect some cool programs in a separate repo. Check it out here: https://github.com/fuopy/shaderception-apps
 
+Syntax highlighting is available in form of a [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=Pema99.psl).
+
 # Example program
 Here is a small raymarcher that is capable at running at interactive speeds in the VM.
 
