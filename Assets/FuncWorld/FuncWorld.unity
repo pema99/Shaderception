@@ -5325,79 +5325,93 @@ GameObject:
   - component: {fileID: 1468583840}
   - component: {fileID: 1468583839}
   m_Layer: 0
-  m_Name: "set uv = uv();\\nset maxScore = 3;\\nset wallTop = 1/32;\\nset wallBottom
-    = 31/32;\\nset wallLeft = 1/32;\\nset wallRight = 31/32;\\nset unitSize = 1/64;\\nset
-    powerSample = self(float2(wallLeft - unitSize, wallTop - unitSize));\\nset ballSample
-    = self(float2(wallRight + unitSize, wallTop - unitSize));\\nset leftPaddleSample
-    = self(float2(wallLeft - unitSize, wallBottom + unitSize));\\nset rightPaddleSample
-    = self(float2(wallRight + unitSize, wallBottom + unitSize));\\nset power = powerSample.x;\\nset
-    ballPos = ballSample.xy;\\nset ballVel = ballSample.zw;\\nset ballSize = float2(unitSize
-    * 2, unitSize * 2);\\nset leftPaddlePos = float2(wallLeft + unitSize * 3, leftPaddleSample.x);\\nset
-    leftPaddleSize = float2(unitSize * 2, unitSize * 8);\\nset leftPaddleScore =
-    leftPaddleSample.y;\\nset rightPaddlePos = float2(wallRight - unitSize * 3, rightPaddleSample.x);\\nset
+  m_Name: "set uv = uv();\\nset dt = deltaTime().x;\\nset maxScore = 3;\\nset wallTop
+    = 1/32;\\nset wallBottom = 31/32;\\nset wallLeft = 1/32;\\nset wallRight = 31/32;\\nset
+    unitSize = 1/64;\\nset powerSample = self(float2(wallLeft - unitSize, wallTop
+    - unitSize));\\nset ballSample = self(float2(wallRight + unitSize, wallTop -
+    unitSize));\\nset leftPaddleSample = self(float2(wallLeft - unitSize, wallBottom
+    + unitSize));\\nset rightPaddleSample = self(float2(wallRight + unitSize, wallBottom
+    + unitSize));\\nset power = powerSample.x;\\nset ballPos = ballSample.xy;\\nset
+    ballVel = ballSample.zw;\\nset ballSize = float2(unitSize * 2, unitSize * 2);\\nset
+    leftPaddlePos = float2(wallLeft + unitSize * 3, leftPaddleSample.x);\\nset leftPaddleSize
+    = float2(unitSize * 2, unitSize * 8);\\nset leftPaddleScore = leftPaddleSample.y;\\nset
+    rightPaddlePos = float2(wallRight - unitSize * 3, rightPaddleSample.x);\\nset
     rightPaddleSize = float2(unitSize * 2, unitSize * 8);\\nset rightPaddleScore
     = rightPaddleSample.y;\\nset playerOneInput = axis().xy;\\nset playerTwoInput
-    = axis().zw;\\nset textColor = float4(1, 1, 1, 0);\\nfun pointbox(ax, ay, bx,
-    by, bw, bh)\\n{\\n\t(ax > bx) && (ax < bx + bw) && (ay > by) && (ay < by + bh)\\n}\\nfun
-    hitbox(apos, asize, bpos, bsize)\\n{\\n\t(apos.x + asize.x > bpos.x) && (apos.x
-    < bpos.x + bsize.x) && (apos.y + asize.y > bpos.y) && (apos.y < bpos.y + bsize.y)\\n}\\nfun
-    UpdatePower()\\n{\\n\tif (power < 1)\\n\t{\\n\t\tset power = 1;\\n\t}\\n\t\\n\tfloat4(1,
-    0, 0, 0)\\n}\\nfun UpdateBall()\\n{\\n\tif (power < 1)\\n\t{\\n\t\tset ballPos
-    = float2(0.5, 0.5);\\n\t\tset ballVel = float2(0.01, 0.001);\\n\t}\\n\t\\n\tif
-    (ballVel.x <= -128)\\n\t{\\n\t\tset ballVel = float2(-0.01, -0.001);\\n\t}\\n\telse
-    if (ballVel.x >= 128)\\n\t{\\n\t\tset ballVel = float2(0.01, 0.001);\\n\t}\\n\t\\n\tset
-    ballPos.y = ballPos.y + ballVel.y;\\n\tif (ballPos.y + ballSize.y > wallBottom)\\n\t{\\n\t\tset
-    ballVel.y = -abs(ballVel.y);\\n\t\tset ballPos.y = wallBottom - ballSize.y;\\n\t}\\n\telse
-    if (ballPos.y < wallTop)\\n\t{\\n\t\tset ballVel.y = abs(ballVel.y);\\n\t\tset
-    ballPos.y = wallTop;\\n\t}\\n\t\\n\tif (hitbox(ballPos, ballSize, leftPaddlePos,
-    leftPaddleSize))\\n\t{\\n\t\tif (ballVel.x < 0)\\n\t\t{\\n\t\t\tset ballVel.x
-    = abs(ballVel.x);\\n\t\t\tset ballVel.y = 0.2 * (ballPos.y - (leftPaddlePos.y
-    + leftPaddleSize.y/2));\\n\t\t}\\n\t}\\n\t\\n\tif (hitbox(ballPos, ballSize,
-    rightPaddlePos, rightPaddleSize))\\n\t{\\n\t\tif (ballVel.x > 0)\\n\t\t{\\n\t\t\tset
-    ballVel.x = -abs(ballVel.x);\\n\t\t\tset ballVel.y = 0.2 * (ballPos.y - (rightPaddlePos.y
-    + rightPaddleSize.y/2));\\n\t\t}\\n\t}\\n\t\\n\tset ballPos.x = ballPos.x + ballVel.x;\\n\tif
-    (ballPos.x + ballSize.x > wallRight)\\n\t{\\n\t\tset ballVel.x = -128;\\n\t\tset
-    ballPos = float2(0.5, 0.5);\\n\t}\\n\telse if (ballPos.x < wallLeft)\\n\t{\\n\t\tset
-    ballVel.x = 128;\\n\t\tset ballPos = float2(0.5, 0.5);\\n\t}\\n\t\\n\tfloat4(ballPos.x,
-    ballPos.y, ballVel.x, ballVel.y)\\n}\\nfun UpdateLeftPaddle()\\n{\\n\tif (power
-    < 1)\\n\t{\\n\t\tset leftPaddleScore = 0;\\n\t}\\n\tif (ballVel.x >= 128)\\n\t{\\n\t\tset
-    rightPaddleScore = rightPaddleScore + 1;\\n\t}\\n\tif (ballVel.x <= -128)\\n\t{\\n\t\tset
-    leftPaddleScore = leftPaddleScore + 1;\\n\t}\\n\tif (leftPaddleScore > maxScore
-    || rightPaddleScore > maxScore)\\n\t{\\n\t\tset leftPaddleScore = 0;\\n\t\tset
-    rightPaddleScore = 0;\\n\t}\\n\t\\n\tif (playerOneInput.y > 0)\\n\t{\\n\t\tset
-    leftPaddlePos.y = leftPaddlePos.y + 0.01;\\n\t}\\n\telse if (playerOneInput.y
-    < 0)\\n\t{\\n\t\tset leftPaddlePos.y = leftPaddlePos.y - 0.01;\\n\t}\\n\tif (leftPaddlePos.y
-    < wallTop)\\n\t{\\n\t\tset leftPaddlePos.y = wallTop;\\n\t}\\n\telse if (leftPaddlePos.y
-    + leftPaddleSize.y > wallBottom)\\n\t{\\n\t\tset leftPaddlePos.y = wallBottom
-    - leftPaddleSize.y;\\n\t}\\n\tfloat4(leftPaddlePos.y, leftPaddleScore, 0, 0)\\n}\\nfun
-    UpdateRightPaddle()\\n{\\n\tif (power < 1)\\n\t{\\n\t\tset rightPaddleScore =
-    0;\\n\t}\\n\tif (ballVel.x >= 128)\\n\t{\\n\t\tset rightPaddleScore = rightPaddleScore
-    + 1;\\n\t}\\n\tif (ballVel.x <= -128)\\n\t{\\n\t\tset leftPaddleScore = leftPaddleScore
-    + 1;\\n\t}\\n\tif (leftPaddleScore > maxScore || rightPaddleScore > maxScore)\\n\t{\\n\t\tset
-    leftPaddleScore = 0;\\n\t\tset rightPaddleScore = 0;\\n\t}\\n\tif (rightPaddlePos.y
-    + (rightPaddleSize.y / 2) < ballPos.y)\\n\t{\\n\t\tset rightPaddlePos.y = rightPaddlePos.y
-    + 0.01;\\n\t}\\n\telse if (rightPaddlePos.y + (rightPaddleSize.y / 2) > ballPos.y
-    + ballSize.y)\\n\t{\\n\t\tset rightPaddlePos.y = rightPaddlePos.y - 0.01;\\n\t}\\n\tif
-    (rightPaddlePos.y < wallTop)\\n\t{\\n\t\tset rightPaddlePos.y = wallTop;\\n\t}\\n\telse
-    if (rightPaddlePos.y + rightPaddleSize.y > wallBottom)\\n\t{\\n\t\tset rightPaddlePos.y
-    = wallBottom - rightPaddleSize.y;\\n\t}\\n\tfloat4(rightPaddlePos.y, rightPaddleScore,
-    0, 0)\\n}\\nfun DrawDigit(inx, iny, digit)\\n{\\n\tset x = floor(uv.x * 64) -
-    inx;\\n\tset y = floor(uv.y * 64) - iny;\\n\t\\n\tif (x >= 0 && x <= 2)\\n\t{\\n\t\tif
-    (digit == 0)\\n\t\t{\\n\t\t\tif (y == 4) { textColor }\\n\t\t\telse if (y ==
-    3) { if (x != 1) { textColor } }\\n\t\t\telse if (y == 2) { if (x != 1) { textColor
-    } }\\n\t\t\telse if (y == 1) { if (x != 1) { textColor } }\\n\t\t\telse if (y
-    == 0) { textColor }\\n\t\t}\\n\t\telse if (digit == 1)\\n\t\t{\\n\t\t\tif (y
-    == 4) { if (x == 1) { textColor } }\\n\t\t\telse if (y == 3) { if (x != 2) {
-    textColor } }\\n\t\t\telse if (y == 2) { if (x == 1) { textColor } }\\n\t\t\telse
-    if (y == 1) { if (x == 1) { textColor } }\\n\t\t\telse if (y == 0) { if (x ==
-    1) { textColor } }\\n\t\t}\\n\t\telse if (digit == 2)\\n\t\t{\\n\t\t\tif (y ==
-    4) { textColor }\\n\t\t\telse if (y == 3) { if (x == 2) { textColor } }\\n\t\t\telse
-    if (y == 2) { textColor }\\n\t\t\telse if (y == 1) { if (x == 0) { textColor
-    } }\\n\t\t\telse if (y == 0) { textColor }\\n\t\t}\\n\t\telse if (digit == 3)\\n\t\t{\\n\t\t\tif
-    (y == 4) { textColor }\\n\t\t\telse if (y == 3) { if (x == 2) { textColor } }\\n\t\t\telse
-    if (y == 2) { textColor }\\n\t\t\telse if (y == 1) { if (x == 2) { textColor
-    } }\\n\t\t\telse if (y == 0) { textColor }\\n\t\t}\\n\t}\\n}\\nfun DrawBoard()\\n{\\n\tif
-    (pointbox(uv.x, uv.y, ballPos.x, ballPos.y, ballSize.x, ballSize.y))\\n\t{\\n\t\tfloat4(1,
+    = axis().zw;\\nset textColor = float4(1, 1, 1, 0);\\nset paddleSpeed = 1.0 *
+    dt;\\nset animationDuration = 1.0;\\nset noColor = float4(0, 0, 0, 0);\\nfun
+    pointbox(ax, ay, bx, by, bw, bh)\\n{\\n\t(ax > bx) && (ax < bx + bw) && (ay >
+    by) && (ay < by + bh)\\n}\\nfun hitbox(apos, asize, bpos, bsize)\\n{\\n\t(apos.x
+    + asize.x > bpos.x) && (apos.x < bpos.x + bsize.x) && (apos.y + asize.y > bpos.y)
+    && (apos.y < bpos.y + bsize.y)\\n}\\nfun UpdatePower()\\n{\\n\tif (power < 1)\\n\t{\\n\t\tset
+    power = 1;\\n\t}\\n\t\\n\tfloat4(1, 0, 0, 0)\\n}\\nfun UpdateBall()\\n{\\n\tif
+    (power < 1)\\n\t{\\n\t\tset ballPos = float2(0.5 - unitSize / 2, 0.5 - unitSize
+    / 2);\\n\t\tset ballVel = float2(0.01, 0.001);\\n\t}\\n\t\\n\tif (ballVel.x <=
+    -128)\\n\t{\\n\t\tset ballPos.x = ballPos.x - dt;\\n\t\tif (ballPos.x <= 0)\\n\t\t{\\n\t\t\tset
+    ballPos = float2(0.5 - unitSize / 2, 0.5 - unitSize / 2);\\n\t\t\tset ballVel
+    = float2(0.01, 0);\\n\t\t}\\n\t}\\n\telse if (ballVel.x >= 128)\\n\t{\\n\t\tset
+    ballPos.x = ballPos.x - dt;\\n\t\tif (ballPos.x <= 0)\\n\t\t{\\n\t\t\tset ballPos
+    = float2(0.5 - unitSize / 2, 0.5 - unitSize / 2);\\n\t\t\tset ballVel = float2(-0.01,
+    0);\\n\t\t}\\n\t}\\n\telse\\n\t{\\n\t\tset ballPos.y = ballPos.y + ballVel.y
+    * (dt * 100);\\n\t\tif (ballPos.y + ballSize.y > wallBottom)\\n\t\t{\\n\t\t\tset
+    ballVel.y = -abs(ballVel.y);\\n\t\t\tset ballPos.y = wallBottom - ballSize.y;\\n\t\t}\\n\t\telse
+    if (ballPos.y < wallTop)\\n\t\t{\\n\t\t\tset ballVel.y = abs(ballVel.y);\\n\t\t\tset
+    ballPos.y = wallTop;\\n\t\t}\\n\t\t\\n\t\tif (hitbox(ballPos, ballSize, leftPaddlePos,
+    leftPaddleSize))\\n\t\t{\\n\t\t\tif (ballVel.x < 0)\\n\t\t\t{\\n\t\t\t\tset ballVel.x
+    = abs(ballVel.x);\\n\t\t\t\tset ballVel.y = 0.2 * (ballPos.y - (leftPaddlePos.y
+    + leftPaddleSize.y/2));\\n\t\t\t}\\n\t\t}\\n\t\t\\n\t\tif (hitbox(ballPos, ballSize,
+    rightPaddlePos, rightPaddleSize))\\n\t\t{\\n\t\t\tif (ballVel.x > 0)\\n\t\t\t{\\n\t\t\t\tset
+    ballVel.x = -abs(ballVel.x);\\n\t\t\t\tset ballVel.y = 0.2 * (ballPos.y - (rightPaddlePos.y
+    + rightPaddleSize.y/2));\\n\t\t\t}\\n\t\t}\\n\t\t\\n\t\tset ballPos.x = ballPos.x
+    + ballVel.x * (dt * 100);\\n\t\tif (ballPos.x + ballSize.x > wallRight)\\n\t\t{\\n\t\t\tset
+    ballVel.x = -128;\\n\t\t\tset ballPos = float2(1, 0);\\n\t\t}\\n\t\telse if (ballPos.x
+    < wallLeft)\\n\t\t{\\n\t\t\tset ballVel.x = 128;\\n\t\t\tset ballPos = float2(1,
+    0);\\n\t\t}\\n\t}\\n\t\\n\tfloat4(ballPos.x, ballPos.y, ballVel.x, ballVel.y)\\n}\\nfun
+    UpdateLeftPaddle()\\n{\\n\tif (power < 1)\\n\t{\\n\t\tset leftPaddleScore = 0;\\n\t}\\n\tif
+    (ballVel.x >= 128 && floor(ballPos.x) == animationDuration)\\n\t{\\n\t\tset rightPaddleScore
+    = rightPaddleScore + 1;\\n\t}\\n\tif (ballVel.x <= -128 && floor(ballPos.x) ==
+    animationDuration)\\n\t{\\n\t\tset leftPaddleScore = leftPaddleScore + 1;\\n\t}\\n\tif
+    (leftPaddleScore > maxScore || rightPaddleScore > maxScore)\\n\t{\\n\t\tset leftPaddleScore
+    = 0;\\n\t\tset rightPaddleScore = 0;\\n\t}\\n\t\\n\tif (playerOneInput.y > 0)\\n\t{\\n\t\tset
+    leftPaddlePos.y = leftPaddlePos.y + paddleSpeed;\\n\t}\\n\telse if (playerOneInput.y
+    < 0)\\n\t{\\n\t\tset leftPaddlePos.y = leftPaddlePos.y - paddleSpeed;\\n\t}\\n\tif
+    (leftPaddlePos.y < wallTop)\\n\t{\\n\t\tset leftPaddlePos.y = wallTop;\\n\t}\\n\telse
+    if (leftPaddlePos.y + leftPaddleSize.y > wallBottom)\\n\t{\\n\t\tset leftPaddlePos.y
+    = wallBottom - leftPaddleSize.y;\\n\t}\\n\tfloat4(leftPaddlePos.y, leftPaddleScore,
+    0, 0)\\n}\\nfun UpdateRightPaddle()\\n{\\n\tif (power < 1)\\n\t{\\n\t\tset rightPaddleScore
+    = 0;\\n\t}\\n\tif (ballVel.x >= 128 && floor(ballPos.x) == animationDuration)\\n\t{\\n\t\tset
+    rightPaddleScore = rightPaddleScore + 1;\\n\t}\\n\tif (ballVel.x <= -128 && floor(ballPos.x)
+    == animationDuration)\\n\t{\\n\t\tset leftPaddleScore = leftPaddleScore + 1;\\n\t}\\n\tif
+    (leftPaddleScore > maxScore || rightPaddleScore > maxScore)\\n\t{\\n\t\tset leftPaddleScore
+    = 0;\\n\t\tset rightPaddleScore = 0;\\n\t}\\n\tif (rightPaddlePos.y + (rightPaddleSize.y
+    / 2) < ballPos.y)\\n\t{\\n\t\tset rightPaddlePos.y = rightPaddlePos.y + paddleSpeed;\\n\t}\\n\telse
+    if (rightPaddlePos.y + (rightPaddleSize.y / 2) > ballPos.y + ballSize.y)\\n\t{\\n\t\tset
+    rightPaddlePos.y = rightPaddlePos.y - paddleSpeed;\\n\t}\\n\tif (rightPaddlePos.y
+    < wallTop)\\n\t{\\n\t\tset rightPaddlePos.y = wallTop;\\n\t}\\n\telse if (rightPaddlePos.y
+    + rightPaddleSize.y > wallBottom)\\n\t{\\n\t\tset rightPaddlePos.y = wallBottom
+    - rightPaddleSize.y;\\n\t}\\n\tfloat4(rightPaddlePos.y, rightPaddleScore, 0,
+    0)\\n}\\nfun DrawDigit(inx, iny, digit)\\n{\\n\tset x = floor(uv.x * 64) - inx;\\n\tset
+    y = floor(uv.y * 64) - iny;\\n\t\\n\tif (x >= 0 && x <= 2)\\n\t{\\n\t\tif (digit
+    == 0)\\n\t\t{\\n\t\t\tif (y == 4) { textColor }\\n\t\t\telse if (y == 3) { if
+    (x != 1) { textColor } else { noColor } }\\n\t\t\telse if (y == 2) { if (x !=
+    1) { textColor } else { noColor } }\\n\t\t\telse if (y == 1) { if (x != 1) {
+    textColor } else { noColor } }\\n\t\t\telse if (y == 0) { textColor }\\n\t\t\telse
+    { noColor }\\n\t\t}\\n\t\telse if (digit == 1)\\n\t\t{\\n\t\t\tif (y == 4) {
+    if (x == 1) { textColor } else { noColor } }\\n\t\t\telse if (y == 3) { if (x
+    != 2) { textColor } else { noColor } }\\n\t\t\telse if (y == 2) { if (x == 1)
+    { textColor } else { noColor } }\\n\t\t\telse if (y == 1) { if (x == 1) { textColor
+    } else { noColor } }\\n\t\t\telse if (y == 0) { if (x == 1) { textColor } else
+    { noColor } }\\n\t\t\telse { noColor }\\n\t\t}\\n\t\telse if (digit == 2)\\n\t\t{\\n\t\t\tif
+    (y == 4) { textColor }\\n\t\t\telse if (y == 3) { if (x == 2) { textColor } else
+    { noColor } }\\n\t\t\telse if (y == 2) { textColor }\\n\t\t\telse if (y == 1)
+    { if (x == 0) { textColor } else { noColor } }\\n\t\t\telse if (y == 0) { textColor
+    }\\n\t\t\telse { noColor }\\n\t\t}\\n\t\telse if (digit == 3)\\n\t\t{\\n\t\t\tif
+    (y == 4) { textColor }\\n\t\t\telse if (y == 3) { if (x == 2) { textColor } else
+    { noColor } }\\n\t\t\telse if (y == 2) { textColor }\\n\t\t\telse if (y == 1)
+    { if (x == 2) { textColor } else { noColor } }\\n\t\t\telse if (y == 0) { textColor
+    }\\n\t\t\telse { noColor }\\n\t\t}\\n\t\telse { noColor }\\n\t}\\n\telse { noColor
+    }\\n}\\nfun DrawBoard()\\n{\\n\tif ((uv.y < wallTop || uv.y > wallBottom ))\\n\t{\\n\t\tDrawGutter()\\n\t}\\n\telse
+    if (pointbox(uv.x, uv.y, ballPos.x, ballPos.y, ballSize.x, ballSize.y))\\n\t{\\n\t\tfloat4(1,
     0, 0, 0)\\n\t}\\n\telse if (pointbox(uv.x, uv.y, leftPaddlePos.x, leftPaddlePos.y,
     leftPaddleSize.x, leftPaddleSize.y))\\n\t{\\n\t\tfloat4(0, 1, 0, 0)\\n\t}\\n\telse
     if (pointbox(uv.x, uv.y, rightPaddlePos.x, rightPaddlePos.y, rightPaddleSize.x,
@@ -5405,10 +5419,17 @@ GameObject:
     (unitSize.x * 32) && uv.x < (unitSize.x * 33))\\n\t{\\n\t\tfloat4(1, 1, 1, 0)\\n\t}\\n\telse
     if (uv.x < 0.5)\\n\t{\\n\t\tDrawDigit(28, 56, leftPaddleScore)\\n\t}\\n\telse\\n\t{\\n\t\tDrawDigit(34,
     56, rightPaddleScore)\\n\t}\\n}\\nfun DrawGutter()\\n{\\n\tfloat4(1, 1, 1, 0)\\n}\\nif
-    (uv.y < wallTop)\\n{\\n\tif (uv.x < wallLeft)\\n\t{\\n\t\tUpdatePower()\\n\t}\\n\telse
-    if (uv.x > wallRight)\\n\t{\\n\t\tUpdateBall()\\n\t}\\n\telse\\n\t{\\n\t\tDrawGutter()\\n\t}\\n}\\nelse
-    if (uv.y > wallBottom)\\n{\\n\tif (uv.x < wallLeft)\\n\t{\\n\t\tUpdateLeftPaddle()\\n\t}\\n\telse
-    if (uv.x > wallRight)\\n\t{\\n\t\tUpdateRightPaddle()\\n\t}\\n\telse\\n\t{\\n\t\tDrawGutter()\\n\t}\\n}\\nelse\\n{\\n\tDrawBoard()\\n}"
+    ((uv.y < wallTop) && (uv.x < wallLeft))\\n{\\n\tUpdatePower()\\n}\\nelse if ((uv.y
+    < wallTop) && (uv.x > wallRight))\\n{\\n\tUpdateBall()\\n}\\nelse if ((uv.y >
+    wallBottom) && (uv.x < wallLeft))\\n{\\n\tUpdateLeftPaddle()\\n}\\nelse if ((uv.y
+    > wallBottom) && (uv.x > wallRight))\\n{\\n\tUpdateRightPaddle()\\n}\\nelse\\n{\\n\tlet
+    finalColor = DrawBoard();\\n\t\\n\tif (finalColor.r < 1 && finalColor.g < 1 &&
+    finalColor.b < 1)\\n\t{\\n\t\tlet finalColor = video(uv);\\n\t}\\n\t\\n\tif (ballVel.x
+    >= 128 || ballVel.x <= -128)\\n\t{\\n\t\tlet circleRadius = abs(length(xy()));\\n\t\tlet
+    circleCheck = ballPos.x * ballPos.x * ballPos.x * 64;\\n\t\tlet circleStep1 =
+    circleRadius < circleCheck;\\n\t\tlet circleStep2 = circleRadius < circleCheck
+    * 2;\\n\t\tlet circleStep3 = circleRadius < circleCheck * 3;\\n\t\t\\n\t\tlet
+    finalColor += float4(circleStep1, 0, 0, 0);\\n\t}\\n\t\\n\tfinalColor\\n}"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
