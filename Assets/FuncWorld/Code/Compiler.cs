@@ -19,6 +19,7 @@ public class Compiler : UdonSharpBehaviour
     //     Audiolink
     //     Arbitrary writes with geom
     //     Indirect jump
+    //     Saturate
     // Maybe:
     //     Early returns
     //     Non-inlined functions. Actual callstack?
@@ -348,7 +349,7 @@ public class Compiler : UdonSharpBehaviour
             if (parsed[id][i] == null) break;
 
             // User function, inline
-            if (parsed[id][i] == "CALL" && FuncIdentToIndex((string)parsed[id][i+1]) == 0)
+            if (parsed[id][i].Equals("CALL") && FuncIdentToIndex((string)parsed[id][i+1]) == 0)
             {
                 for (int j = 0; j < funcIdents.Length; j++) // find body of function to inline
                 {
@@ -389,7 +390,7 @@ public class Compiler : UdonSharpBehaviour
             else
             {
                 // Rename variables if a mapping table is available
-                if (parsed[id][i] == "PUSHVAR" || parsed[id][i] == "SETVAR")
+                if (parsed[id][i].Equals("PUSHVAR") || parsed[id][i].Equals("SETVAR"))
                 {
                     string ident = (string)parsed[id][i+1];
                     if (renameFrom != null)
@@ -438,13 +439,13 @@ public class Compiler : UdonSharpBehaviour
                     }
                 }
                 // Dont add labels, rename labels per inline
-                else if (parsed[id][i] == "LABEL")
+                else if (parsed[id][i].Equals("LABEL"))
                 {
                     labels[currentLabels++] = parsed[id][i+1] + "_" + currentInline;
-                    labels[currentLabels++] = currentLinked;
+                    labels[currentLabels++] = (float)currentLinked;
                 }
                 // Rename labes per inline
-                else if (parsed[id][i] == "JUMP" || parsed[id][i] == "CONDJUMP")
+                else if (parsed[id][i].Equals("JUMP") || parsed[id][i].Equals("CONDJUMP"))
                 {
                     linked[currentLinked++] = parsed[id][i];
                     linked[currentLinked++] = parsed[id][i+1] + "_" + currentInline;
@@ -472,7 +473,7 @@ public class Compiler : UdonSharpBehaviour
         {
             if (linked[i] == null) break;
 
-            if (linked[i] == "JUMP" || linked[i] == "CONDJUMP")
+            if (linked[i].Equals("JUMP") || linked[i].Equals("CONDJUMP"))
             {
                 string label = (string)linked[i+1];
                 for (int j = 0; j < labels.Length; j += 2)
@@ -492,7 +493,7 @@ public class Compiler : UdonSharpBehaviour
         {
             if (linked[i] == null) break;
 
-            if (linked[i] == "PUSHVAR" || linked[i] == "SETVAR")
+            if (linked[i].Equals("PUSHVAR") || linked[i].Equals("SETVAR"))
             {
                 if (alloced[i]) // don't allocate registers multiple times
                     continue;
@@ -506,7 +507,7 @@ public class Compiler : UdonSharpBehaviour
 
                     string[] b = linked[j+1].ToString().Split('.');
 
-                    if ((linked[j] == "PUSHVAR" || linked[j] == "SETVAR") && a[0] == b[0])
+                    if ((linked[j].Equals("PUSHVAR") || linked[j].Equals("SETVAR")) && a[0] == b[0])
                     {
                         if (b.Length > 1) // handle swizzle
                         {
