@@ -5,6 +5,8 @@ My friend Fuopy wrote an awesome playable pong game using this that you can try 
 
 Syntax highlighting is available in form of a [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=Pema99.psl).
 
+A tool to run the compiler outside of Unity is [here](https://github.com/pema99/shaderception-standalone).
+
 # Example program
 Here is a small raymarcher that is capable at running at interactive speeds in the VM.
 
