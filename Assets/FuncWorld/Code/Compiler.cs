@@ -245,7 +245,7 @@ public class Compiler : UdonSharpBehaviour
         {
             if (linked[i] == null) program[i] = Vector4.zero;
 
-            switch (linked[i])
+            switch ((string)linked[i])
             {
                 case "PUSHCONST":
                     program[i] = one * 1;
@@ -282,10 +282,10 @@ public class Compiler : UdonSharpBehaviour
 
                             switch (swizzle[j])
                             {
-                                case 'x': case 'r': mask += '1'; break;
-                                case 'y': case 'g': mask += '2'; break;
-                                case 'z': case 'b': mask += '3'; break;
-                                case 'w': case 'a': mask += '4'; break;
+                                case 'x': case 'r': mask += '1'.ToString(); break;
+                                case 'y': case 'g': mask += '2'.ToString(); break;
+                                case 'z': case 'b': mask += '3'.ToString(); break;
+                                case 'w': case 'a': mask += '4'.ToString(); break;
                             }
                         }
                         program[i+1].y = float.Parse(mask);
@@ -768,7 +768,7 @@ public class Compiler : UdonSharpBehaviour
     [RecursiveMethod]
     void Block()
     {
-        while (!IsAtEnd() && !Statement());
+        while (!IsAtEnd() && !Statement()) {}
 
         // optional return statement
         bool hasReturn = Match("return");
