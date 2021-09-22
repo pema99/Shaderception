@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.07924773, g: 0.07262555, b: 0.060329873, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -6002,25 +6002,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1518389029}
   m_CullTransparentMesh: 0
---- !u!1 &1528116181 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1094421957795851142, guid: 8894fa7e4588a5c4fab98453e558847d,
-    type: 3}
-  m_PrefabInstance: {fileID: 450775146}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1528116186
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1528116181}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contentType: 1
 --- !u!1 &1611236191
 GameObject:
   m_ObjectHideFlags: 0
@@ -13061,7 +13042,7 @@ MonoBehaviour:
   Far: 30
   Near: 0
   VolumetricRadius: 0.5
-  EnableSpatialization: 1
+  EnableSpatialization: 0
   UseAudioSourceVolumeCurve: 1
 --- !u!82 &6421412928203058179
 AudioSource:
@@ -13079,7 +13060,7 @@ AudioSource:
   m_Pitch: 1
   Loop: 0
   Mute: 0
-  Spatialize: 1
+  Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
@@ -14667,7 +14648,7 @@ MonoBehaviour:
   Far: 30
   Near: 0
   VolumetricRadius: 0.5
-  EnableSpatialization: 1
+  EnableSpatialization: 0
   UseAudioSourceVolumeCurve: 1
 --- !u!82 &6421412928485929715
 AudioSource:
@@ -14685,7 +14666,7 @@ AudioSource:
   m_Pitch: 1
   Loop: 0
   Mute: 0
-  Spatialize: 1
+  Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
@@ -15192,7 +15173,7 @@ MonoBehaviour:
   Far: 30
   Near: 0
   VolumetricRadius: 0.5
-  EnableSpatialization: 1
+  EnableSpatialization: 0
   UseAudioSourceVolumeCurve: 1
 --- !u!82 &6421412928659761527
 AudioSource:
@@ -15210,7 +15191,7 @@ AudioSource:
   m_Pitch: 1
   Loop: 0
   Mute: 0
-  Spatialize: 1
+  Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
@@ -16968,7 +16949,7 @@ RectTransform:
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_Children: []
   m_Father: {fileID: 6421412927455487463}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
@@ -17647,7 +17628,7 @@ RectTransform:
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_Children: []
   m_Father: {fileID: 6421412927455487463}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}

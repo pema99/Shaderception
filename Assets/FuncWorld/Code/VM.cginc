@@ -184,12 +184,10 @@ float4 getFunSentinelMask(uint opi, uint arity, float4x4 ops)
     //   skips those. Remember, the ops matrix is an reverse order.
     if ((opi >= 1 && opi <= 25) || opi == 37  || opi == 39 || opi == 40)
     {
-        //return ops[arity-1];
-        uint maxDim = 0;
-        for (uint i = 0; i < arity; i++)
-        {
-            maxDim = max(maxDim, getDimension(ops[arity-1-i]));
-        }
+        uint maxDim = max(
+            max(getDimension(ops[0]) * (arity > 0), getDimension(ops[1]) * (arity > 1)),
+            max(getDimension(ops[2]) * (arity > 2), getDimension(ops[3]) * (arity > 3)));
+
         return getSentinelMask(maxDim);
     }
     else
