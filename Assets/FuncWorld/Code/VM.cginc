@@ -5,6 +5,10 @@ sampler2D _Camera;
 sampler2D _Video;
 float _IsAVProInput;
 
+#ifdef AUDIOLINK
+#include "../../AudioLink/Shaders/AudioLink.cginc"
+#endif
+
 // Program binary
 cbuffer ProgramBuffer {
     float4 _Program[1023*4] : packoffset(c0);  
@@ -25,7 +29,7 @@ static float4 vtab[256];
 // Other globals
 static float2 globaluv;
 static uint jumpCount = 0;
-static const float MAX_JUMPS = 2000;
+static const uint MAX_JUMPS = 2000;
 
 // Sentinel handling
 uint4 _Sentinel;
@@ -91,7 +95,7 @@ float4 dynamicCast(float4 val, uint from, uint to)
 float4 swizzle(float4 val, float4 mask)
 {
     float4 res = getSentinel();
-    for (uint i = 0; i < 4; i++)
+    [unroll] for (uint i = 0; i < 4; i++)
     {
         if (mask[i] > 0)
         {
@@ -252,6 +256,19 @@ uint2 getFunInfo(uint opi)
         case 47: return uint2(1, 0);
         case 48: return uint2(1, 0);
         case 49: return uint2(1, 0);
+#ifdef AUDIOLINK
+        case 65: return uint2(0, 0);
+        case 66: return uint2(1, 0);
+        case 67: return uint2(1, 0);
+        case 68: return uint2(1, 0);
+        case 69: return uint2(1, 0);
+        case 70: return uint2(1, 0);
+        case 71: return uint2(1, 0);
+        case 72: return uint2(2, 0);
+        case 73: return uint2(2, 0);
+        case 74: return uint2(3, 0);
+        case 75: return uint2(4, 0);
+#endif
         default: return uint2(0, 0); 
     }
 }
@@ -309,6 +326,19 @@ float4 callFun(uint opi, float4x4 ops, uint4 dims)
         case 47: return float4(tex2Dlod(_Video, float4(_IsAVProInput ? float2(ops[0].x, 1-ops[0].y) : ops[0].xy, 0, 0)).xyz, getSentinel().x);
         case 48: return float4(dims.x == 1 ? all(ops[0].x) : (dims.x == 2 ? all(ops[0].xy) : (dims.x == 3 ? all(ops[0].xyz) : all(ops[0]))), getSentinel().xxx);
         case 49: return float4(any(ops[0]), getSentinel().xxx);
+#ifdef AUDIOLINK
+        case 65: return float4(AudioLinkGetVersion(), getSentinel().xxx);
+        case 66: return AudioLinkData(uint2(ops[0].xy));
+        case 67: return AudioLinkDataMultiline(uint2(ops[0].xy));
+        case 68: return AudioLinkLerp(ops[0].xy);
+        case 69: return AudioLinkLerpMultiline(ops[0].xy);
+        case 70: return float4(AudioLinkDecodeDataAsSeconds(uint2(ops[0].xy)), getSentinel().xxx);
+        case 71: return AudioLinkGetAmplitudeAtFrequency(ops[0].x);
+        case 72: return float4(AudioLinkGetAmplitudeAtNote(ops[0].x, ops[1].x), getSentinel().xxx);
+        case 73: return float4(AudioLinkGetChronoTime(uint(ops[0].x), uint(ops[1].x)), getSentinel().xxx);
+        case 74: return float4(AudioLinkGetChronoTimeNormalized(uint(ops[0].x), uint(ops[1].x), ops[2].x), getSentinel().xxx);
+        case 75: return float4(AudioLinkGetChronoTimeInterval(uint(ops[0].x), uint(ops[1].x), ops[2].x, ops[3].x), getSentinel().xxx);
+#endif
         default: return 0; 
     }
 }
@@ -397,7 +427,7 @@ float4 runVM(float2 uv)
                 float4x4 vals = 0;
                 uint4 dims = 0;
                 uint maxDim = 0;
-                for (uint k = 0; k < arity; k++)
+                [unroll(4)] for (uint k = 0; k < arity; k++)
                 {
                     float4 val = popStack();
                     dims[k] = getDimension(val);
@@ -413,7 +443,7 @@ float4 runVM(float2 uv)
                 );
                 float4x4 revMasked = 0;
                 uint4 revDims = 0;
-                for (uint j = 0; j < arity; j++)
+                [unroll(4)] for (uint j = 0; j < arity; j++)
                 {
                     float4 vall = masked[arity-1-j];
                     uint dim = dims[arity-1-j];

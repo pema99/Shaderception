@@ -6,6 +6,7 @@ using VRC.Udon;
 using VRC.Udon.Common;
 using UnityEngine.UI;
 
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class Compiler : UdonSharpBehaviour
 {
     // TODO:
@@ -211,6 +212,18 @@ public class Compiler : UdonSharpBehaviour
             case "video":      return 47;
             case "all":        return 48;
             case "any":        return 49;
+            // AudioLink Extension
+            case "audiolinkgetversion": return 65;
+            case "audiolinkdata": return 66;
+            case "audiolinkdatamultiline": return 67;
+            case "audiolinklerp": return 68;
+            case "audiolinklerpmultiline": return 69;
+            case "audiolinkdecodedataasseconds": return 70;
+            case "audiolinkgetamplitudeatfrequency": return 71;
+            case "audiolinkgetamplitudeatnote": return 72;
+            case "audiolinkgetchronotime": return 73;
+            case "audiolinkgetchronotimenormalized": return 74;
+            case "audiolinkgetchronotimeinterval": return 75;
             default:           return 0;
         }
     }
@@ -586,6 +599,18 @@ public class Compiler : UdonSharpBehaviour
             case 47: return 1;
             case 48: return 1;
             case 49: return 1;
+            // AudioLink Extension
+            case 65: return 0;
+            case 66: return 1;
+            case 67: return 1;
+            case 68: return 1;
+            case 69: return 1;
+            case 70: return 1;
+            case 71: return 1;
+            case 72: return 2;
+            case 73: return 2;
+            case 74: return 3;
+            case 75: return 4;
             default:
                 for (int i = 0; i < funcIdents.Length; i++)
                 {
