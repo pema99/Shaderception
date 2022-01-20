@@ -13,6 +13,7 @@
         Pass
         {
             CGPROGRAM
+            #define AUDIOLINK
             #include "UnityCustomRenderTexture.cginc"
             #include "VM.cginc"
             #pragma vertex CustomRenderTextureVertexShader
