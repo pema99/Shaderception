@@ -7,6 +7,19 @@ Syntax highlighting is available in form of a [Visual Studio Code extension](htt
 
 A tool to run the compiler outside of Unity is [here](https://github.com/pema99/shaderception-standalone).
 
+Thanks to Vistanz for adding AudioLink support!
+
+# Dependencies
+For the compiler and language:
+- Udon
+- UdonSharp
+- AudioLink (soft dependency, see VM.shader)
+- CyanEmu (optional)
+
+For the example scene:
+- z3y's VertexColorPens
+- USharpVideo
+
 # Example program
 Here is a small raymarcher that is capable at running at interactive speeds in the VM.
 
