@@ -6,7 +6,7 @@ sampler2D _Video;
 float _IsAVProInput;
 
 #ifdef AUDIOLINK
-#include "../../AudioLink/Shaders/AudioLink.cginc"
+#include "/Assets/AudioLink/Shaders/AudioLink.cginc"
 #endif
 
 // Program binary
