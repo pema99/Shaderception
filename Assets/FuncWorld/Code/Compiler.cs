@@ -9,84 +9,85 @@ using UnityEngine.UI;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class Compiler : UdonSharpBehaviour
 {
-    // TODO:
-    // Problems:
-    //     Error handling!
-    //     Implicit casts for user defined functions
-    //     Lerp with scalar broken
-    //     Don't inline forever
-    //     Inlining bug: https://pastebin.com/ygMQ8VSn
-    // Add:
-    //     Audiolink
-    //     Arbitrary writes with geom
-    //     Indirect jump
-    //     Saturate
-    // Maybe:
-    //     Early returns
-    //     Non-inlined functions. Actual callstack?
-    //     C-style defines
-
     public InputField input;
     public Text output;
-    public Material screenMat;
+    public UdonInterpreter interpreter;
 
-    // Runtime
-    void Start()
+    public void Start()
     {
+        string code =
+".data_start\n" +
+"    __refl_const_intnl_udonTypeID: %SystemInt64, null\n" +
+"    __refl_const_intnl_udonTypeName: %SystemString, null\n" +
+"    __0_b_Single: %SystemSingle, null\n" +
+"    __0_a_Single: %SystemSingle, null\n" +
+"    __1_const_intnl_SystemInt32: %SystemInt32, null\n" +
+"    __0_const_intnl_SystemInt32: %SystemInt32, null\n" +
+"    __0_const_intnl_SystemUInt32: %SystemUInt32, null\n" +
+"    __0_intnl_SystemSingle: %SystemSingle, null\n" +
+"    __0_intnl_returnTarget_UInt32: %SystemUInt32, null\n" +
+"\n" +
+".data_end\n" +
+"\n" +
+"        \n" +
+"         #  using UdonSharp;\n" +
+"        \n" +
+"         #  using UnityEngine;\n" +
+"        \n" +
+"         #  using VRC.SDKBase;\n" +
+"        \n" +
+"         #  using VRC.Udon;\n" +
+"        \n" +
+"         #  public class test : UdonSharpBehaviour\n" +
+".code_start\n" +
+"        \n" +
+"         #  void Start()\n" +
+"    .export _start\n" +
+"        \n" +
+"    _start:\n" +
+"        \n" +
+"        PUSH, __0_const_intnl_SystemUInt32\n" +
+"        \n" +
+"         #  {\n" +
+"        \n" +
+"         #  float a = 1337;\n" +
+"        PUSH, __0_const_intnl_SystemInt32\n" +
+"        PUSH, __0_a_Single\n" +
+"        EXTERN, \"SystemConvert.__ToSingle__SystemInt32__SystemSingle\"\n" +
+"        \n" +
+"         #  float b = 420;\n" +
+"        PUSH, __1_const_intnl_SystemInt32\n" +
+"        PUSH, __0_b_Single\n" +
+"        EXTERN, \"SystemConvert.__ToSingle__SystemInt32__SystemSingle\"\n" +
+"        \n" +
+"         #  Debug.Log(a + b);\n" +
+"        PUSH, __0_a_Single\n" +
+"        PUSH, __0_b_Single\n" +
+"        PUSH, __0_intnl_SystemSingle\n" +
+"        EXTERN, \"SystemSingle.__op_Subtraction__SystemSingle_SystemSingle__SystemSingle\"\n" +
+"        PUSH, __0_intnl_SystemSingle\n" +
+"        EXTERN, \"UnityEngineDebug.__Log__SystemObject__SystemVoid\"\n" +
+"        PUSH, __0_intnl_returnTarget_UInt32 # Function epilogue\n" +
+"        COPY\n" +
+"        JUMP_INDIRECT, __0_intnl_returnTarget_UInt32\n" +
+"        \n" +
+".code_end";
+        input.text = code;
         Compile();
     }
 
-    Vector4 inputButton;
-    Vector4 inputAxis;
-    public override void InputUse(bool isPressed, UdonInputEventArgs args)
+    public void Step()
     {
-        inputButton.x = (isPressed ? 1 : 0);
-    }
-
-    public override void InputJump(bool isPressed, UdonInputEventArgs args)
-    {
-        inputButton.y = (isPressed ? 1 : 0);
-    }
-
-    public override void InputGrab(bool isPressed, UdonInputEventArgs args)
-    {
-        inputButton.z = (isPressed ? 1 : 0);
-    }
-
-    public override void InputDrop(bool isPressed, UdonInputEventArgs args)
-    {
-        inputButton.w = (isPressed ? 1 : 0);
-    }
-
-    public override void InputMoveHorizontal(float val, UdonInputEventArgs args)
-    {
-        inputAxis.x = val;
-    }
-
-    public override void InputMoveVertical(float val, UdonInputEventArgs args)
-    {
-        inputAxis.y = val;
-    }
-
-    public override void InputLookHorizontal(float val, UdonInputEventArgs args)
-    {
-        inputAxis.z = val;
-    }
-
-    public override void InputLookVertical(float val, UdonInputEventArgs args)
-    {
-        inputAxis.w = val;
-    }
-
-    void Update()
-    {
-        screenMat.SetVector("_InputButton", inputButton);
-        screenMat.SetVector("_InputAxis", inputAxis);
+        interpreter.Step();
     }
 
     // Compiler
     public void Compile()
     {
+        interpreter.code = input.text;
+        interpreter.Init();
+
+        return; // TODO
         error = null;
 
         // Lex
@@ -123,23 +124,119 @@ public class Compiler : UdonSharpBehaviour
         globals = new string[4092];
         currentLinked = 0;
         linked = new object[4092];
-        currentLabels = 0;
-        labels = new object[4092];
-        Link();
+        currentConsts = 0;
+        consts = new object[4092];
+        Inline(0);
         if (HasError())
         {
             output.text = error;
             return;
         }
-        output.text = "";
+
+        string data = "";
+        for (int i = 0; i < consts.Length; i ++)
+        {
+            if (consts[i] == null) break;
+
+            data += $"__const_{i}: %SystemSingle, null #{consts[i]}\n";
+        }
+
+        string code = "";
         for (int i = 0; i < linked.Length; i += 2)
         {
             if (linked[i] == null) break;
-            output.text += (linked[i] + " " + linked[i + 1]) + "\n";
+            //output.text += (linked[i] + " " + linked[i + 1]) + "\n";
+
+            switch (linked[i])
+            {
+                case "PUSHCONST":
+                    code += $"PUSH, __const_{linked[i+1]}\n";
+                    //program[i] = one * 1;
+                    //program[i+1] = (Vector4)linked[i+1];
+                    break;
+                case "PUSHVAR":
+                    code += $"PUSH, {linked[i+1]}\n";
+                    //program[i] = one * 2;
+                    //program[i+1] = one * float.Parse((string)linked[i+1]);
+                    break;
+                case "BINOP":
+                    code += "PUSH, __acc_SystemSingle\n";
+                    code += $"EXTERN, \"{BinOpToUdon((string)linked[i+1])}\"\n";
+                    code += "PUSH, __acc_SystemSingle\n";
+                    //program[i] = one * 3;
+                    //program[i+1] = one * BinOpToIndex((string)linked[i+1]);
+                    break;
+                case "UNOP":
+                    code += "PUSH, __acc_SystemSingle\n";
+                    code += $"EXTERN, \"{UnOpToUdon((string)linked[i+1])}\"\n";
+                    code += "PUSH, __acc_SystemSingle\n";
+                    //program[i] = one * 4;
+                    //program[i+1] = one * (float)((int)((string)linked[i+1])[0]);
+                    break;
+                case "CALL":
+                    code += "PUSH, __acc_SystemSingle\n";
+                    code += $"EXTERN, \"{FuncIdentToUdon((string)linked[i+1])}\"\n";
+                    code += "PUSH, __acc_SystemSingle\n";
+                    //program[i] = one * 5;
+                    //program[i+1] = one * FuncIdentToIndex((string)linked[i+1]);
+                    break;
+                case "SETVAR":
+                    code += $"PUSH, {linked[i+1]}\n";
+                    code += $"COPY\n";
+                    //program[i] = one * 6;
+                    //string[] parts = ((string)linked[i+1]).Split('.');
+                    //program[i+1] = one * float.Parse(parts[0]);
+                    /*if (parts.Length > 1) // swizzle assignments
+                    {
+                        string swizzle = parts[1];
+                        string mask = "";
+                        for (int j = 0; j < 4; j++)
+                        {
+                            if (j >= swizzle.Length)
+                                break;
+
+                            switch (swizzle[j])
+                            {
+                                case 'x': case 'r': mask += '1'; break;
+                                case 'y': case 'g': mask += '2'; break;
+                                case 'z': case 'b': mask += '3'; break;
+                                case 'w': case 'a': mask += '4'; break;
+                            }
+                        }
+                        program[i+1].y = float.Parse(mask);
+                    }*/
+                    break;
+                case "JUMP":
+                    code += $"JUMP, {linked[i+1]}\n";
+                    //program[i] = one * 7;
+                    //program[i+1] = one * (float)linked[i+1];
+                    break;
+                case "CONDJUMP":
+                    code += $"JUMP_IF_FALSE, {linked[i+1]}\n";
+                    //program[i] = one * 8;
+                    //program[i+1] = one * (float)linked[i+1];
+                    break;
+                case "LABEL":
+                    code += $"{linked[i+1]}:\n";
+                    //program[i] = one * 9;
+                    //program[i+1] = Vector4.zero;
+                    break;
+            }
         }
 
-        // Write to material
-        WriteProgramToMaterial(screenMat);
+        output.text = @".data_start
+__acc_SystemSingle: %SystemSingle, null
+###DATA
+.data_end
+
+.code_start
+
+.export _update
+
+_update:
+###CODE
+.code_end".Replace("###CODE", code).Replace("###DATA", data);
+
     }
 
     // Error handling
@@ -159,185 +256,39 @@ public class Compiler : UdonSharpBehaviour
     }
 
     // Write to GPU data
-    float FuncIdentToIndex(string ident)
+    string FuncIdentToUdon(string ident)
     {
-        switch (ident.ToLower())
-        {
-            case "log":        return 1;
-            case "log2":       return 2;
-            case "sin":        return 3;     
-            case "cos":        return 4;  
-            case "tan":        return 5;     
-            case "asin":       return 6;     
-            case "acos":       return 7;     
-            case "atan":       return 8;     
-            case "pow":        return 9;            
-            case "exp":        return 10;  
-            case "exp2":       return 11;       
-            case "sqrt":       return 12;       
-            case "rsqrt":      return 13;       
-            case "abs":        return 14;   
-            case "sign":       return 15;        
-            case "floor":      return 16;        
-            case "ceil":       return 17;        
-            case "frac":       return 18;        
-            case "mod":        return 19;                
-            case "min":        return 20;            
-            case "max":        return 21;            
-            case "clamp":      return 22;                    
-            case "lerp":       return 23;                    
-            case "step":       return 24;            
-            case "smoothstep": return 25;
-            case "float2":     return 26;
-            case "float3":     return 27;
-            case "float4":     return 28;
-            case "swizzle":    return 29;          
-            case "uv":         return 30;
-            case "xy":         return 31;
-            case "time":       return 32;
-            case "round":      return 33;
-            case "dot":        return 34;
-            case "cross":      return 35;
-            case "distance":   return 36;
-            case "normalize":  return 37;
-            case "length":     return 38;
-            case "reflect":    return 39;
-            case "refract":    return 40;
-            case "self":       return 41;
-            case "resolution": return 42;
-            case "button":     return 43;
-            case "axis":       return 44;
-            case "camera":     return 45;
-            case "deltatime":  return 46;
-            case "video":      return 47;
-            case "all":        return 48;
-            case "any":        return 49;
-            // AudioLink Extension
-            case "audiolinkgetversion": return 65;
-            case "audiolinkdata": return 66;
-            case "audiolinkdatamultiline": return 67;
-            case "audiolinklerp": return 68;
-            case "audiolinklerpmultiline": return 69;
-            case "audiolinkdecodedataasseconds": return 70;
-            case "audiolinkgetamplitudeatfrequency": return 71;
-            case "audiolinkgetamplitudeatnote": return 72;
-            case "audiolinkgetchronotime": return 73;
-            case "audiolinkgetchronotimenormalized": return 74;
-            case "audiolinkgetchronotimeinterval": return 75;
-            default:           return 0;
-        }
+        return ident; // TODO
     }
 
-    float BinOpToIndex(string op)
+    string BinOpToUdon(string op)
     {
         switch (op)
         {
-            case "+":  return 1;
-            case "-":  return 2;
-            case "*":  return 3;
-            case "/":  return 4;
-            case "<":  return 5;
-            case ">":  return 6;
-            case "==": return 7;
-            case "<=": return 8;
-            case ">=": return 9;
-            case "!=": return 10;
-            case "&&": return 11;
-            case "||": return 12;
-            default:   return 0;
+            case "+":  return "SystemSingle.__op_Addition__SystemSingle_SystemSingle__SystemSingle";
+            case "-":  return "SystemSingle.__op_Subtraction__SystemSingle_SystemSingle__SystemSingle";
+            case "*":  return "SystemSingle.__op_Multiplication__SystemSingle_SystemSingle__SystemSingle";
+            case "/":  return "SystemSingle.__op_Division__SystemSingle_SystemSingle__SystemSingle";
+            case "<":  return "SystemSingle.__op_LessThan__SystemSingle_SystemSingle__SystemBoolean";
+            case ">":  return "SystemSingle.__op_GreaterThan__SystemSingle_SystemSingle__SystemBoolean";
+            case "==": return "SystemSingle.__op_Equality__SystemSingle_SystemSingle__SystemBoolean";
+            case "<=": return "SystemSingle.__op_LessThanOrEqual__SystemSingle_SystemSingle__SystemBoolean";
+            case ">=": return "SystemSingle.__op_GreaterThanOrEqual__SystemSingle_SystemSingle__SystemBoolean";
+            case "!=": return "SystemSingle.__op_Inequality__SystemSingle_SystemSingle__SystemBoolean";
+            case "&&": return "TODO: &&";
+            case "||": return "TODO: ||";
+            default:   return "TODO: " + op;
         }
     }
 
-    void WriteProgramToMaterial(Material mat)
+    string UnOpToUdon(string op)
     {
-        Vector4 one = new Vector4(1, float.NaN, float.NaN, float.NaN);
-
-        Vector4[] program = new Vector4[4092];
-
-        for (int i = 0; i < linked.Length; i += 2)
+        switch (op)
         {
-            if (linked[i] == null) program[i] = Vector4.zero;
-
-            switch (linked[i])
-            {
-                case "PUSHCONST":
-                    program[i] = one * 1;
-                    program[i+1] = (Vector4)linked[i+1];
-                    break;
-                case "PUSHVAR":
-                    program[i] = one * 2;
-                    program[i+1] = one * float.Parse((string)linked[i+1]);
-                    break;
-                case "BINOP":
-                    program[i] = one * 3;
-                    program[i+1] = one * BinOpToIndex((string)linked[i+1]);
-                    break;
-                case "UNOP":
-                    program[i] = one * 4;
-                    program[i+1] = one * (float)((int)((string)linked[i+1])[0]);
-                    break;
-                case "CALL":
-                    program[i] = one * 5;
-                    program[i+1] = one * FuncIdentToIndex((string)linked[i+1]);
-                    break;
-                case "SETVAR":
-                    program[i] = one * 6;
-                    string[] parts = ((string)linked[i+1]).Split('.');
-                    program[i+1] = one * float.Parse(parts[0]);
-                    if (parts.Length > 1) // swizzle assignments
-                    {
-                        string swizzle = parts[1];
-                        string mask = "";
-                        for (int j = 0; j < 4; j++)
-                        {
-                            if (j >= swizzle.Length)
-                                break;
-
-                            switch (swizzle[j])
-                            {
-                                case 'x': case 'r': mask += '1'; break;
-                                case 'y': case 'g': mask += '2'; break;
-                                case 'z': case 'b': mask += '3'; break;
-                                case 'w': case 'a': mask += '4'; break;
-                            }
-                        }
-                        program[i+1].y = float.Parse(mask);
-                    }
-                    break;
-                case "JUMP":
-                    program[i] = one * 7;
-                    program[i+1] = one * (float)linked[i+1];
-                    break;
-                case "CONDJUMP":
-                    program[i] = one * 8;
-                    program[i+1] = one * (float)linked[i+1];
-                    break;
-                case "LABEL":
-                    program[i] = one * 9;
-                    program[i+1] = Vector4.zero;
-                    break;
-            }
+            case "-": return "SystemSingle.__op_UnaryMinus__SystemSingle__SystemSingle";
+            case "!": return "TODO: !";
+            default:  return "TODO: " + op;
         }
-
-        // split binary to put into aliased cbuffer
-        Vector4[][] split = new Vector4[4][]
-        {
-            new Vector4[1023],
-            new Vector4[1023],
-            new Vector4[1023],
-            new Vector4[1023]
-        };
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 1023; j++)
-            {
-                split[i][j] = program[i * 1023 + j];
-            }
-        }
-        mat.SetVectorArray("_Program0", split[0]);
-        mat.SetVectorArray("_Program1", split[1]);
-        mat.SetVectorArray("_Program2", split[2]);
-        mat.SetVectorArray("_Program3", split[3]);
     }
 
     // Linking
@@ -349,8 +300,8 @@ public class Compiler : UdonSharpBehaviour
     string[] globals;
     int currentLinked;
     object[] linked;
-    int currentLabels = 0;
-    object[] labels;
+    int currentConsts = 0;
+    object[] consts;
 
     [RecursiveMethod]
     void Inline(int id)
@@ -362,7 +313,7 @@ public class Compiler : UdonSharpBehaviour
             if (parsed[id][i] == null) break;
 
             // User function, inline
-            if (parsed[id][i].Equals("CALL") && FuncIdentToIndex((string)parsed[id][i+1]) == 0)
+            if (parsed[id][i].Equals("CALL")/* && FuncIdentToIndex((string)parsed[id][i+1]) == 0*/)
             {
                 for (int j = 0; j < funcIdents.Length; j++) // find body of function to inline
                 {
@@ -451,87 +402,24 @@ public class Compiler : UdonSharpBehaviour
                         linked[currentLinked++] = funcIdents[id] + "_" + parsed[id][i+1];
                     }
                 }
-                // Dont add labels, rename labels per inline
-                else if (parsed[id][i].Equals("LABEL"))
-                {
-                    labels[currentLabels++] = parsed[id][i+1] + "_" + currentInline;
-                    labels[currentLabels++] = (float)currentLinked;
-                }
                 // Rename labes per inline
-                else if (parsed[id][i].Equals("JUMP") || parsed[id][i].Equals("CONDJUMP"))
+                else if (parsed[id][i].Equals("JUMP") || parsed[id][i].Equals("CONDJUMP") || parsed[id][i].Equals("LABEL"))
                 {
                     linked[currentLinked++] = parsed[id][i];
                     linked[currentLinked++] = parsed[id][i+1] + "_" + currentInline;
+                }
+                // Gather constants
+                else if (parsed[id][i].Equals("PUSHCONST"))
+                {
+                    linked[currentLinked++] = parsed[id][i];
+                    linked[currentLinked++] = currentConsts;
+                    consts[currentConsts++] = parsed[id][i+1];
                 }
                 // All other instructions
                 else
                 {
                     linked[currentLinked++] = parsed[id][i];
                     linked[currentLinked++] = parsed[id][i+1];
-                }
-            }
-        }
-    }
-
-    void Link()
-    {
-        renameFrom = null;
-        renameTo = null;
-
-        // Inlining, start with global scope
-        Inline(0);
-
-        // Jump location linking
-        for (int i = 0; i < linked.Length; i += 2)
-        {
-            if (linked[i] == null) break;
-
-            if (linked[i].Equals("JUMP") || linked[i].Equals("CONDJUMP"))
-            {
-                string label = (string)linked[i+1];
-                for (int j = 0; j < labels.Length; j += 2)
-                {
-                    if (label.Equals(labels[j]))
-                    {
-                        linked[i+1] = (float)labels[j+1];
-                    }
-                }
-            }
-        }
-
-        // Register allocation
-        bool[] alloced = new bool[linked.Length];
-        int regAlloc = 0;
-        for (int i = 0; i < linked.Length; i += 2)
-        {
-            if (linked[i] == null) break;
-
-            if (linked[i].Equals("PUSHVAR") || linked[i].Equals("SETVAR"))
-            {
-                if (alloced[i]) // don't allocate registers multiple times
-                    continue;
-
-                string reg = (regAlloc++).ToString();
-                string[] a = linked[i+1].ToString().Split('.');
-
-                for (int j = 0; j < linked.Length; j += 2)
-                {
-                    if (linked[j] == null) break;
-
-                    string[] b = linked[j+1].ToString().Split('.');
-
-                    if ((linked[j].Equals("PUSHVAR") || linked[j].Equals("SETVAR")) && a[0] == b[0])
-                    {
-                        if (b.Length > 1) // handle swizzle
-                        {
-                            linked[j+1] = reg + "." + b[1];
-                        }
-                        else
-                        {
-                            linked[j+1] = reg;
-                        }
-                        alloced[j] = true;
-                    }
                 }
             }
         }
@@ -548,7 +436,7 @@ public class Compiler : UdonSharpBehaviour
 
     int GetFuncArity(string ident)
     {
-        switch (FuncIdentToIndex(ident))
+        /*switch (FuncIdentToIndex(ident))
         {
             case 1:  return 1;
             case 2:  return 1;
@@ -599,19 +487,8 @@ public class Compiler : UdonSharpBehaviour
             case 47: return 1;
             case 48: return 1;
             case 49: return 1;
-            // AudioLink Extension
-            case 65: return 0;
-            case 66: return 1;
-            case 67: return 1;
-            case 68: return 1;
-            case 69: return 1;
-            case 70: return 1;
-            case 71: return 1;
-            case 72: return 2;
-            case 73: return 2;
-            case 74: return 3;
-            case 75: return 4;
-            default:
+
+            default:*/
                 for (int i = 0; i < funcIdents.Length; i++)
                 {
                     if (funcIdents[i] == null) break;
@@ -629,7 +506,7 @@ public class Compiler : UdonSharpBehaviour
                     }
                 }
                 return -1;
-        }
+        //}
     }
 
     void SwitchToFunction(string ident, string[] parameters)
@@ -1002,7 +879,7 @@ public class Compiler : UdonSharpBehaviour
         if (Match("let") || Match("set")) return true; // normal assignments
         if (Peek().GetType() == typeof(string))
         {
-            // Handle swizzle
+            // Handle field access
             int offset = 1;
             if (MatchTo(1, '.') && PeekTo(2).GetType() == typeof(string))
             {
