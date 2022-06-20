@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22203902d63dec94194fefc3e155c43b, type: 3}
+  m_Name: ExternInvoker
+  m_EditorClassIdentifier: 
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 20538a9c65f7de5438a4fcf50d356284,
+    type: 2}
+  udonAssembly: ".data_start\r\n\r\n    .export name\r\n    name: %SystemString,
+    null\r\n    \r\n    .export arg0\r\n    .export arg1\r\n    .export arg2\r\n   
+    .export arg3\r\n    .export arg4\r\n    .export arg5\r\n    .export arg6\r\n   
+    arg0: %SystemObject, null\r\n    arg1: %SystemObject, null\r\n    arg2: %SystemObject,
+    null\r\n    arg3: %SystemObject, null\r\n    arg4: %SystemObject, null\r\n   
+    arg5: %SystemObject, null\r\n    arg6: %SystemObject, null\r\n\r\n.data_end\r\n\r\n.code_start\r\n\r\n   
+    .export InvokeExtern0\r\n    InvokeExtern0:\r\n        EXTERN, name\r\n       
+    JUMP, stop\r\n    \r\n    .export InvokeExtern1\r\n    InvokeExtern1:\r\n       
+    PUSH, arg0\r\n        EXTERN, name\r\n        JUMP, stop\r\n    \r\n    .export
+    InvokeExtern2\r\n    InvokeExtern2:\r\n        PUSH, arg0\r\n        PUSH, arg1\r\n       
+    EXTERN, name\r\n        JUMP, stop\r\n    \r\n    .export InvokeExtern3\r\n   
+    InvokeExtern3:\r\n        PUSH, arg0\r\n        PUSH, arg1\r\n        PUSH, arg2\r\n       
+    EXTERN, name\r\n        JUMP, stop\r\n\r\n    .export InvokeExtern4\r\n    InvokeExtern4:\r\n       
+    PUSH, arg0\r\n        PUSH, arg1\r\n        PUSH, arg2\r\n        PUSH, arg3\r\n       
+    EXTERN, name\r\n        JUMP, stop\r\n\r\n    .export InvokeExtern5\r\n    InvokeExtern5:\r\n       
+    PUSH, arg0\r\n        PUSH, arg1\r\n        PUSH, arg2\r\n        PUSH, arg3\r\n       
+    PUSH, arg4\r\n        EXTERN, name\r\n        JUMP, stop\r\n\r\n    .export InvokeExtern6\r\n   
+    InvokeExtern6:\r\n        PUSH, arg0\r\n        PUSH, arg1\r\n        PUSH, arg2\r\n       
+    PUSH, arg3\r\n        PUSH, arg4\r\n        PUSH, arg5\r\n        EXTERN, name\r\n       
+    JUMP, stop\r\n        \r\n    .export InvokeExtern7\r\n    InvokeExtern7:\r\n       
+    PUSH, arg0\r\n        PUSH, arg1\r\n        PUSH, arg2\r\n        PUSH, arg3\r\n       
+    PUSH, arg4\r\n        PUSH, arg5\r\n        PUSH, arg6\r\n        EXTERN, name\r\n       
+    JUMP, stop\r\n\r\n    stop:\r\n        NOP\r\n\r\n.code_end\r\n"
+  assemblyError: 
